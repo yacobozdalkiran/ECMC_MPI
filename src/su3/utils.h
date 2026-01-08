@@ -1,0 +1,30 @@
+//
+// Created by ozdalkiran-l on 1/8/26.
+//
+
+#ifndef INC_4D_MPI_UTILS_H
+#define INC_4D_MPI_UTILS_H
+
+#include <Eigen/Dense>
+#include <complex>
+#include <random>
+
+using SU3 = Eigen::Matrix3cd;
+using Complex = std::complex<double>;
+
+inline SU3 el_3(double xi) {
+    /*Generates a exp(i xi lambda_3)*/
+    SU3 result;
+    double cxi = cos(xi);
+    double sxi = sin(xi);
+    result << Complex(cxi, sxi), Complex(0.0,0.0), Complex(0.0,0.0),
+              Complex(0.0,0.0), Complex(cxi, -sxi), Complex(0.0,0.0),
+              Complex(0.0,0.0), Complex(0.0,0.0), Complex(1.0,0.0);
+    return result;
+}
+SU3 random_su3(std::mt19937_64 &rng);
+SU3 su2_quaternion_to_su3(const std::array<double,4> &su2, int i, int j);
+SU3 random_SU3_epsilon(double epsilon, std::mt19937_64 &rng);
+std::vector<SU3> ecmc_set(double epsilon, std::vector<SU3> &set, std::mt19937_64 &rng);
+
+#endif //INC_4D_MPI_UTILS_H
