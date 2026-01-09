@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Rank :" << topo.rank << ", local :" << topo.local_rank << std::endl;
     mpi::GeometryFrozenMPI geo(4);
     mpi::LocalGaugeField field(4);
-    mpi::shift::fill_halo_send(field, geo, 0, 0);
+    mpi::shift::n_full_shifts(field, geo, 1, 1, topo);
     MPI_Finalize();
     return 0;
 }

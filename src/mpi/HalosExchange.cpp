@@ -7,6 +7,8 @@
 #include "HalosExchange.h"
 #include <iostream>
 
+#include "MpiTopology.h"
+
 //Fills the halo with the cellule defined by mu=0 if i_mu=0 or mu=L-1 if i_mu = 1
 void mpi::shift::fill_halo_send(LocalGaugeField &field, const GeometryFrozenMPI &geo, int mu, bool i_mu) {
     if (mu < 0 || mu > 3) std::cerr << "Wrong value of mu\n";
@@ -146,13 +148,32 @@ void mpi::shift::fill_lattice_with_halo_recv(mpi::LocalGaugeField &field, const 
     }
 
 //n shifts in direction mu, c0 et cL are resp. src and dest of exchange_halos
-void mpi::shift::n_full_shifts(mpi::LocalGaugeField &field, const mpi::GeometryFrozenMPI &geo, int n, int mu, int c0, int cL, MPI_Comm comm) {
-    MPI_Barrier(comm);
-    for (int i = 0; i < n; i++) {
-        mpi::shift::fill_halo_send(field, geo, mu, 1);
-        mpi::shift::exchange_halos(field, c0, cL, comm);
-        mpi::shift::shift_pos(field, geo, mu);
-        mpi::shift::fill_lattice_with_halo_recv(field, geo, mu, 1);
+//TODO:check safety for successive shifts -> MPI_Barrier ?
+void mpi::shift::n_full_shifts(mpi::LocalGaugeField &field, const mpi::GeometryFrozenMPI &geo, int n, int mu, const mpi::MpiTopology &topo) {
+    MPI_Barrier(topo.cart_comm);
+    int c0{}, cL{};
+    if (mu==0) {
+        c0 = topo.x0;
+        cL = topo.xL;
     }
-    MPI_Barrier(comm);
+    if (mu==1) {
+        c0 = topo.y0;
+        cL = topo.yL;
+    }
+    if (mu==2) {
+        c0 = topo.z0;
+        cL = topo.zL;
+    }
+    if (mu==3) {
+        c0 = topo.t0;
+        cL = topo.tL;
+    }
+
+    for (int i = 0; i < n; i++) {
+        mpi::shift::fill_halo_send(field, geo, mu, true);
+        mpi::shift::exchange_halos(field, c0, cL, topo.cart_comm);
+        mpi::shift::shift_pos(field, geo, mu);
+        mpi::shift::fill_lattice_with_halo_recv(field, geo, mu, true);
+    }
+    MPI_Barrier(topo.cart_comm);
 }

@@ -7,6 +7,7 @@
 
 #include "../gauge/LocalGaugeField.h"
 #include "../geometry/GeometryFrozen.h"
+#include "MpiTopology.h"
 #include <mpi.h>
 
 namespace mpi::shift {
@@ -15,7 +16,7 @@ namespace mpi::shift {
     void shift_neg(mpi::LocalGaugeField &field, const mpi::GeometryFrozenMPI &geo, int mu);
     void exchange_halos(mpi::LocalGaugeField &field, int source, int dest, MPI_Comm comm);
     void fill_lattice_with_halo_recv(mpi::LocalGaugeField &field, const mpi::GeometryFrozenMPI &geo, int mu, bool i_mu);
-    void n_full_shifts(mpi::LocalGaugeField &field, const mpi::GeometryFrozenMPI &geo, int n, int mu, int c0, int cL, MPI_Comm comm);
+    void n_full_shifts(mpi::LocalGaugeField &field, const mpi::GeometryFrozenMPI &geo, int n, int mu, const mpi::MpiTopology &topo);
 };
 
 
