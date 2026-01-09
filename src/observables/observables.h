@@ -9,6 +9,7 @@
 
 namespace observables {
     double mean_plaquette(const GaugeField &field, const Geometry &geo);
+    double mean_plaquette(const GaugeField &field, const GeometryFrozen &geo);
     double wilson_action(const GaugeField &field, const Geometry &geo);
 }
 

@@ -21,6 +21,30 @@ double observables::mean_plaquette(const GaugeField &field, const Geometry &geo)
     return mean;
 }
 
+//Returns the value of the mean plaquette of the gauge field
+double observables::mean_plaquette(const GaugeField &field, const GeometryFrozen &geo) {
+    double sum = 0.0;
+    size_t counter = 0;
+    SU3 staple;
+    for (int t = 1; t<geo.T-1; t++){
+        for (int z = 1; z<geo.L-1; z++) {
+            for (int y = 1; y<geo.L-1; y++) {
+                for (int x = 1; x<geo.L-1; x++) {
+                    size_t site = geo.index(x,y,z,t);
+                    for (int mu = 0; mu < 4; mu++) {
+                        compute_staple(field, geo, site, mu, staple);
+                        double p = (field.view_link_const(site, mu) * staple).trace().real() / 18.0; //N_plaquettes*N_colors
+                        sum += p;
+                        counter += 1;
+                    }
+                }
+            }
+        }
+    }
+    double mean = sum / static_cast<double>(counter);
+    return mean;
+}
+
 //Returns the value of the Wilson action of the gauge field
 double observables::wilson_action(const GaugeField &field, const Geometry &geo) {
     double action = 0.0;

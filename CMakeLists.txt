@@ -17,6 +17,10 @@ add_executable(4d_MPI main.cpp
         src/ecmc/ecmc.cpp
         src/ecmc/ecmc.h
         src/observables/observables.cpp
-        src/observables/observables.h)
+        src/observables/observables.h
+        src/geometry/GeometryFrozen.cpp
+        src/geometry/GeometryFrozen.h
+        src/ecmc/ecmc_frozen.cpp
+        src/ecmc/ecmc_frozen.h)
 
 target_link_libraries(4d_MPI PRIVATE Eigen3::Eigen)

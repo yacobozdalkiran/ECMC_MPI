@@ -26,5 +26,11 @@ SU3 random_su3(std::mt19937_64 &rng);
 SU3 su2_quaternion_to_su3(const std::array<double,4> &su2, int i, int j);
 SU3 random_SU3_epsilon(double epsilon, std::mt19937_64 &rng);
 std::vector<SU3> ecmc_set(double epsilon, std::vector<SU3> &set, std::mt19937_64 &rng);
-
+//Returns the sign of the double x
+inline int dsign(double x) {
+    //fonction signe pour double
+    if (x>0) return 1;
+    if (x<0) return -1;
+    return 0;
+}
 #endif //INC_4D_MPI_UTILS_H

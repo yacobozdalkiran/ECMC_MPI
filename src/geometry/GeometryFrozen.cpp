@@ -2,9 +2,9 @@
 // Created by ozdalkiran-l on 1/8/26.
 //
 
-#include "Geometry.h"
+#include "GeometryFrozen.h"
 
-Geometry::Geometry(int L_, int T_) {
+GeometryFrozen::GeometryFrozen(int L_, int T_) {
     L = L_;
     T = T_;
     V = T*L*L*L;
@@ -52,6 +52,23 @@ Geometry::Geometry(int L_, int T_) {
                             links_staples_flat[index_staples(site, mu, j+1, 2)] = {xmnu, nu};
 
                             j += 2;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    is_frozen_flat.resize(V*4, false);
+
+    for (int t = 0; t < T; t++) {
+        for (int z = 0; z < L; z++) {
+            for (int y = 0; y < L; y++) {
+                for (int x = 0; x < L; x++) {
+                    size_t site = index(x, y, z, t); //x
+                    for (int mu = 0; mu < 4; mu++) {
+                        if (x==0||x==L-1||y==0||y==L-1||z==0||z==L-1||t==0||t==T-1) {
+                            is_frozen_flat[index_frozen(site, mu)] = true;
                         }
                     }
                 }

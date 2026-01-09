@@ -10,6 +10,7 @@
 #include <complex>
 #include <random>
 #include "../geometry/Geometry.h"
+#include "../geometry/GeometryFrozen.h"
 
 using Complex = std::complex<double>;
 using SU3 = Eigen::Matrix3cd;
@@ -39,7 +40,7 @@ public:
         return Eigen::Map<SU3>(&links[(site * 4 + mu) * 9]);
     }
     //Const mapping of links to SU3 matrices
-    Eigen::Map<const SU3> view_link_const(size_t site, int mu) const{
+    [[nodiscard]] Eigen::Map<const SU3> view_link_const(size_t site, int mu) const{
         return Eigen::Map<const SU3>(&links[(site * 4 + mu) * 9]);
     }
 
@@ -47,5 +48,6 @@ public:
 };
 
 void compute_staple(const GaugeField &field, const Geometry &geo, size_t site, int mu, SU3 &staple);
+void compute_staple(const GaugeField &field, const GeometryFrozen &geo, size_t site, int mu, SU3 &staple);
 
 #endif //INC_4D_MPI_GAUGEFIELD_H
