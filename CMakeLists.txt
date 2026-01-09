@@ -3,8 +3,8 @@ project(4d_MPI)
 
 set(CMAKE_CXX_STANDARD 20)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -ffast-math -march=native -Wall -Wextra")
 
+find_package(MPI REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
 
 add_executable(4d_MPI main.cpp
@@ -22,5 +22,13 @@ add_executable(4d_MPI main.cpp
         src/geometry/GeometryFrozen.h
         src/ecmc/ecmc_frozen.cpp
         src/ecmc/ecmc_frozen.h)
+
+target_compile_options(4d_MPI PRIVATE
+        -O3
+        -ffast-math
+        -march=native
+        -Wall -Wextra
+        -Wpedantic
+        )
 
 target_link_libraries(4d_MPI PRIVATE Eigen3::Eigen)
