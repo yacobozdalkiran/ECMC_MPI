@@ -21,7 +21,7 @@ double observables::mean_plaquette(const GaugeField &field, const Geometry &geo)
     return mean;
 }
 
-//Returns the value of the mean plaquette of the gauge field
+//Returns the value of the mean plaquette of the gauge field ignoring the frozen sites plaquettes
 double observables::mean_plaquette(const GaugeField &field, const GeometryFrozen &geo) {
     double sum = 0.0;
     size_t counter = 0;
@@ -65,4 +65,5 @@ double observables::wilson_action(const GaugeField &field, const Geometry &geo) 
     }
     action *= (1.0/3.0); //1/Ncolors
     //action /= (lat.V*4.0);
-    return action;}
+    return action;
+}

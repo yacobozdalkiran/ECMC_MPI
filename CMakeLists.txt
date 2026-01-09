@@ -21,7 +21,13 @@ add_executable(4d_MPI main.cpp
         src/geometry/GeometryFrozen.cpp
         src/geometry/GeometryFrozen.h
         src/ecmc/ecmc_frozen.cpp
-        src/ecmc/ecmc_frozen.h)
+        src/ecmc/ecmc_frozen.h
+        src/mpi/MpiTopology.cpp
+        src/mpi/MpiTopology.h
+        src/gauge/LocalGaugeField.cpp
+        src/gauge/LocalGaugeField.h
+        src/mpi/HalosExchange.cpp
+        src/mpi/HalosExchange.h)
 
 target_compile_options(4d_MPI PRIVATE
         -O3
@@ -31,4 +37,4 @@ target_compile_options(4d_MPI PRIVATE
         -Wpedantic
         )
 
-target_link_libraries(4d_MPI PRIVATE Eigen3::Eigen)
+target_link_libraries(4d_MPI PRIVATE MPI::MPI_CXX Eigen3::Eigen)

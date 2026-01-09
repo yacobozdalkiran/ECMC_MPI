@@ -1,8 +1,13 @@
 #include <iostream>
 #include "src/ecmc/ecmc_frozen.h"
+#include "src/mpi/MpiTopology.h"
 #include <chrono>
 
-int main(int argc, char* argv[]) {
+#include "src/gauge/LocalGaugeField.h"
+#include "src/mpi/HalosExchange.h"
+
+
+void in_main_ecmc_frozen(char* argv[]) {
     int L = atoi(argv[1]);
     int T = atoi(argv[1]);
     GaugeField field(L, T);
@@ -14,5 +19,15 @@ int main(int argc, char* argv[]) {
     auto end = std::chrono::high_resolution_clock::now();
     auto elapsed = end - start;
     std::cout << "Elapsed time : " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms" << std::endl;
+}
+
+int main(int argc, char* argv[]) {
+    MPI_Init(&argc,&argv);
+    mpi::MpiTopology topo(2);
+    std::cout << "Rank :" << topo.rank << ", local :" << topo.local_rank << std::endl;
+    mpi::GeometryFrozenMPI geo(4);
+    mpi::LocalGaugeField field(4);
+    mpi::shift::fill_halo_send(field, geo, 0, 0);
+    MPI_Finalize();
     return 0;
 }
