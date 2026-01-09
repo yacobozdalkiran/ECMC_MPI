@@ -1,5 +1,4 @@
 #include <iostream>
-#include "src/ecmc/ecmc.h"
 #include "src/ecmc/ecmc_frozen.h"
 #include <chrono>
 
