@@ -14,8 +14,8 @@ add_executable(4d_MPI main.cpp
         src/gauge/GaugeField.h
         src/su3/utils.cpp
         src/su3/utils.h
-        src/ecmc/EcmcUpdater.cpp
-        src/ecmc/EcmcUpdater.h
+        src/ecmc/ecmc.cpp
+        src/ecmc/ecmc.h
         src/observables/observables.cpp
         src/observables/observables.h)
 
