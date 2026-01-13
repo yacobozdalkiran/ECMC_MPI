@@ -9,19 +9,19 @@ mpi::GeometryFrozen::GeometryFrozen(int L_) {
     L = L_;
     V = L*L*L*L;
     neighbors_flat.resize(V*8, SIZE_MAX);
-    for (int t = 1; t < L-1; t++) {
-        for (int z = 1; z < L-1; z++) {
-            for (int y = 1; y < L-1; y++) {
-                for (int x = 1; x < L-1; x++) {
+    for (int t = 0; t < L; t++) {
+        for (int z = 0; z < L; z++) {
+            for (int y = 0; y < L; y++) {
+                for (int x = 0; x < L; x++) {
                     size_t i = index(x, y, z, t);
-                    neighbors_flat[index_neigh(i,0,0)] = index((x + 1), y, z, t);
-                    neighbors_flat[index_neigh(i,0,1)] = index((x - 1), y, z, t);
-                    neighbors_flat[index_neigh(i,1,0)] = index(x, (y + 1), z, t);
-                    neighbors_flat[index_neigh(i,1,1)] = index(x, (y - 1), z, t);
-                    neighbors_flat[index_neigh(i,2,0)] = index(x, y, (z + 1), t);
-                    neighbors_flat[index_neigh(i,2,1)] = index(x, y, (z - 1), t);
-                    neighbors_flat[index_neigh(i,3,0)] = index(x, y, z, (t + 1));
-                    neighbors_flat[index_neigh(i,3,1)] = index(x, y, z, (t - 1));
+                    if (x+1<L) neighbors_flat[index_neigh(i,0,0)] = index((x + 1), y, z, t);
+                    if (x-1 >= 0) neighbors_flat[index_neigh(i,0,1)] = index((x - 1), y, z, t);
+                    if (y+1<L) neighbors_flat[index_neigh(i,1,0)] = index(x, (y + 1), z, t);
+                    if (y-1 >=0) neighbors_flat[index_neigh(i,1,1)] = index(x, (y - 1), z, t);
+                    if (z+1<L) neighbors_flat[index_neigh(i,2,0)] = index(x, y, (z + 1), t);
+                    if (z-1 >=0) neighbors_flat[index_neigh(i,2,1)] = index(x, y, (z - 1), t);
+                    if (t+1<L) neighbors_flat[index_neigh(i,3,0)] = index(x, y, z, (t + 1));
+                    if (t-1>=0) neighbors_flat[index_neigh(i,3,1)] = index(x, y, z, (t - 1));
                 }
             }
         }

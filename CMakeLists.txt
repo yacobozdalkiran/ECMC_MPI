@@ -26,8 +26,9 @@ add_executable(4d_MPI main.cpp
         src/mpi/MpiTopology.h
         src/mpi/HalosExchange.cpp
         src/mpi/HalosExchange.h
-        src/mpi/Halo.cpp
-        src/mpi/Halo.h)
+        src/mpi/Halo.h
+        src/ecmc/ecmc_mpi.cpp
+        src/ecmc/ecmc_mpi.h)
 
 target_compile_options(4d_MPI PRIVATE
         -O3

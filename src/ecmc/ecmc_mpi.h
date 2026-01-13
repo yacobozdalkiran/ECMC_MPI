@@ -1,14 +1,17 @@
 //
-// Created by ozdalkiran-l on 1/9/26.
+// Created by ozdalkiran-l on 1/13/26.
 //
 
-#ifndef INC_4D_MPI_ECMC_FROZEN_H
-#define INC_4D_MPI_ECMC_FROZEN_H
+#ifndef INC_4D_MPI_ECMC_MPI_H
+#define INC_4D_MPI_ECMC_MPI_H
 
 #include <random>
 #include "../gauge/GaugeField.h"
+#include "../observables/observables.h"
 
-namespace ecmc_frozen {
+//TODO:créer une struct pour les paramètres d'ECMC
+
+namespace mpi::ecmc {
     void compute_list_staples(const GaugeField &field, const mpi::GeometryFrozen &geo, size_t site, int mu, std::array<SU3,6> &list_staple);
     void solve_reject(double A, double B, double &gamma, double &reject, int epsilon);
     void compute_reject_angles(const GaugeField &field, size_t site, int mu, const std::array<SU3,6> &list_staple,
@@ -19,10 +22,7 @@ namespace ecmc_frozen {
     void update(GaugeField &field, size_t site, int mu, double theta, int epsilon, const SU3 &R);
     size_t random_site(const mpi::GeometryFrozen &geo, std::mt19937_64 &rng);
     std::vector<double> samples_improved(GaugeField &field, const mpi::GeometryFrozen &geo, double beta, int N_samples,
-    double param_theta_sample, double param_theta_refresh, bool poisson, double epsilon_set, std::mt19937_64 &rng);
+    double param_theta_sample, double param_theta_refresh, bool poisson, double epsilon_set, std::mt19937_64 &rng, HaloObs &halo_obs, mpi::MpiTopology &topo);
 }
 
-
-
-
-#endif //INC_4D_MPI_ECMC_FROZEN_H
+#endif //INC_4D_MPI_ECMC_MPI_H

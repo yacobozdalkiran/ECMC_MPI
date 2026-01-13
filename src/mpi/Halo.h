@@ -6,6 +6,7 @@
 #define INC_4D_MPI_HALO_H
 
 #include "../gauge/GaugeField.h"
+#include <iostream>
 
 //Possible coordinates of the shifts
 enum halo_coord {
@@ -137,7 +138,7 @@ public:
     }
 
     //Non const mapping of the halos of HaloObs instance to SU3 matrices
-    [[nodiscard]] SU3 view_link_halo_obs(face f, buf b, size_t site, int mu) {
+    [[nodiscard]] Eigen::Map<SU3> view_link_halo_obs(face f, buf b, size_t site, int mu) {
         if (b == send) {
             if (f == fx0) return Eigen::Map<SU3>(&fx0_send[(site * 4 + mu) * 9]);
             if (f == fxL) return Eigen::Map<SU3>(&fxL_send[(site * 4 + mu) * 9]);
@@ -159,11 +160,11 @@ public:
             if (f == ftL) return Eigen::Map<SU3>(&ftL_recv[(site * 4 + mu) * 9]);
         }
         std::cerr << "Wrong acces\n";
-        return SU3::Zero();
+        return Eigen::Map<SU3>(NULL);
     }
 
     //Const mapping of the halos of HaloObs instance to SU3 matrices
-    [[nodiscard]] SU3 view_link_halo_obs_const(face f, buf b, size_t site, int mu) const {
+    [[nodiscard]] Eigen::Map<const SU3> view_link_halo_obs_const(face f, buf b, size_t site, int mu) const {
         if (b == send) {
             if (f == fx0) return Eigen::Map<SU3 const>(&fx0_send[(site * 4 + mu) * 9]);
             if (f == fxL) return Eigen::Map<SU3 const>(&fxL_send[(site * 4 + mu) * 9]);
@@ -185,7 +186,7 @@ public:
             if (f == ftL) return Eigen::Map<SU3 const>(&ftL_recv[(site * 4 + mu) * 9]);
         }
         std::cerr << "Wrong acces\n";
-        return SU3::Zero();
+        return Eigen::Map<const SU3>(NULL);
     }
 
     //Returns the link at (x,y,z,t,mu) taking into account the halos_obs

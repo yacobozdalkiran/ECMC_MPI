@@ -77,14 +77,14 @@ double observables::wilson_action(const GaugeField &field, const Geometry &geo) 
     return action;
 }
 
-//Returns the sum of retr/3 of plaquettes of the bulk (i.e. coords btw 1 and L-2)
+//Returns the sum of retr/3 of plaquettes of the bulk (i.e. coords btw 0 and L-2)
 double mpi::observables::sum_plaquette_bulk(const GaugeField &field, const mpi::GeometryFrozen &geo) {
     double sum = 0.0;
     SU3 U1, U2, U3, U4;
-    for (int t = 1; t<geo.L-1; t++){
-        for (int z = 1; z<geo.L-1; z++) {
-            for (int y = 1; y<geo.L-1; y++) {
-                for (int x = 1; x<geo.L-1; x++) {
+    for (int t = 0; t<geo.L-1; t++){
+        for (int z = 0; z<geo.L-1; z++) {
+            for (int y = 0; y<geo.L-1; y++) {
+                for (int x = 0; x<geo.L-1; x++) {
                     size_t site = geo.index(x,y,z,t);
                     for (int mu = 0; mu < 4; mu++) {
                         for (int nu = mu+1; nu<4; nu++) {
@@ -113,7 +113,7 @@ double mpi::observables::sum_plaquette_boundaries(const GaugeField &field, const
             for (int y=0; y<L; y++) {
                 for (int x=0; x<L; x++) {
                     //We treat only the boundary sites
-                    if (x==0 || y==0 || z==0 || t==0 || x==L-1 || y==L-1 || z==L-1 || t==L-1) {
+                    if (x==L-1 || y==L-1 || z==L-1 || t==L-1) {
                         for (int mu=0; mu<4; mu++) {
                             for (int nu=mu+1; nu<4; nu++) {
                                 U1 = halo_obs.get_link_with_halo_obs(field, geo, x,y,z,t,mu);
