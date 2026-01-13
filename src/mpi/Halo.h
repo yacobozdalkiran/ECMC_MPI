@@ -55,11 +55,11 @@ public:
     [[nodiscard]] size_t index_halo(int x, int y, int z, int t) const {
         size_t index{};
         if (coord == X)
-            index = ((static_cast<size_t>(t)*L + z) * L + y)*L_shift+ x;
+            index = ((static_cast<size_t>(t) * L + z) * L + y) * L_shift + x;
         if (coord == Y)
-            index = ((static_cast<size_t>(t)*L + z) * L_shift+ y)* L + x;
+            index = ((static_cast<size_t>(t) * L + z) * L_shift+ y) * L + x;
         if (coord == Z)
-            index =  ((static_cast<size_t>(t)*L_shift+ z) * L+ y)* L + x;
+            index =  ((static_cast<size_t>(t) * L_shift + z) * L + y)* L + x;
         if (coord == T)
             index =  ((static_cast<size_t>(t)*L + z) * L + y)* L + x;
         return index;

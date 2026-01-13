@@ -72,7 +72,7 @@ void mpi::shift::fill_halo_send(const GaugeField &field, const GeometryFrozen &g
         }
     }
     if (halo.coord == T) {
-        for (int t_local= 0; t_local < geo.L; t_local++) {
+        for (int t_local= 0; t_local < halo.L_shift; t_local++) {
             for (int z = 0; z < geo.L; z++) {
                 for (int y = 0; y < geo.L; y++) {
                     for (int x = 0; x < geo.L; x++) {
@@ -104,7 +104,7 @@ void mpi::shift::shift_field(GaugeField &field, const mpi::GeometryFrozen &geo, 
             for (int t = 0; t<L; t++) {
                 for (int z=  0; z<L; z++) {
                     for (int y=0; y<L; y++) {
-                        for (int x = L_shift; x<L; x++) {
+                        for (int x = L-1; x >= L_shift; x--) {
                             size_t site = geo.index(x,y,z,t);
                             size_t copied_site = geo.index(x-L_shift, y, z, t);
                             for (int mu = 0; mu<4; mu++) {
@@ -119,7 +119,7 @@ void mpi::shift::shift_field(GaugeField &field, const mpi::GeometryFrozen &geo, 
         if (coord == Y) {
             for (int t = 0; t<L; t++) {
                 for (int z=  0; z<L; z++) {
-                    for (int y=L_shift; y<L; y++) {
+                    for (int y=L-1; y>=L_shift; y--) {
                         for (int x = 0; x<L; x++) {
                             size_t site = geo.index(x,y,z,t);
                             size_t copied_site = geo.index(x, y-L_shift, z, t);
@@ -135,7 +135,7 @@ void mpi::shift::shift_field(GaugeField &field, const mpi::GeometryFrozen &geo, 
 
         if (coord == Z) {
             for (int t = 0; t<L; t++) {
-                for (int z= L_shift ; z<L; z++) {
+                for (int z= L-1 ; z>=L_shift; z--) {
                     for (int y=0; y<L; y++) {
                         for (int x = 0; x<L; x++) {
                             size_t site = geo.index(x,y,z,t);
@@ -149,7 +149,7 @@ void mpi::shift::shift_field(GaugeField &field, const mpi::GeometryFrozen &geo, 
             }
         }
         if (coord == T) {
-            for (int t = L_shift; t<L; t++) {
+            for (int t = L-1; t>=L_shift; t--) {
                 for (int z=  0; z<L; z++) {
                     for (int y=0; y<L; y++) {
                         for (int x = 0; x<L; x++) {
@@ -233,7 +233,7 @@ void mpi::shift::shift_field(GaugeField &field, const mpi::GeometryFrozen &geo, 
 }
 
 //Fills the halo_recv of the dest node with the content of the halo_send of the source node
-void mpi::shift::exchange_halos(Halo &halo, mpi::MpiTopology &topo, shift_type stype) {
+void mpi::shift::exchange_halos(Halo &halo, mpi::MpiTopology &topo, shift_type stype, MPI_Request* reqs) {
     int source{}, dest{};
     if (halo.coord == X) {
         if (stype == pos) {
@@ -275,9 +275,13 @@ void mpi::shift::exchange_halos(Halo &halo, mpi::MpiTopology &topo, shift_type s
             dest = topo.t0;
         }
     }
-    MPI_Sendrecv(halo.send.data(), 2 * 9 * 4 * halo.V_halo, MPI_DOUBLE, dest, 0,
-        halo.recv.data(), 2 * 9 * 4 * halo.V_halo,MPI_DOUBLE, source, 0,
-        topo.cart_comm, MPI_STATUS_IGNORE);
+    //Non blocking exchange -> we can shift during the exchanges
+    MPI_Irecv(halo.recv.data(), 2*9*4*halo.V_halo, MPI_DOUBLE, source, 10, topo.cart_comm, &reqs[0]);
+    MPI_Isend(halo.send.data(), 2*9*4*halo.V_halo, MPI_DOUBLE, dest, 10, topo.cart_comm, &reqs[1]);
+
+    //MPI_Sendrecv(halo.send.data(), 2 * 9 * 4 * halo.V_halo, MPI_DOUBLE, dest, 0,
+    //    halo.recv.data(), 2 * 9 * 4 * halo.V_halo,MPI_DOUBLE, source, 0,
+    //    topo.cart_comm, MPI_STATUS_IGNORE);
 }
 
 //Replace the values of the corresponding links of the lattice with those of halo_rec
@@ -423,10 +427,12 @@ void mpi::shift::shift(GaugeField &field, const mpi::GeometryFrozen &geo, Halo &
         std::cerr << "Wrong halo size\n";
         return;
     }
+    MPI_Request reqs[2];
     halo.coord = coord_;
     fill_halo_send(field, geo, halo, stype);
+    exchange_halos(halo, topo, stype, reqs);
     shift_field(field, geo, halo, stype);
-    exchange_halos(halo, topo, stype);
+    MPI_Waitall(2, reqs, MPI_STATUSES_IGNORE);
     fill_lattice_with_halo_recv(field, geo, halo, stype);
 }
 
