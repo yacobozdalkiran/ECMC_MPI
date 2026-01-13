@@ -32,6 +32,15 @@ public:
         }
     }
 
+    //Initializes a squared cold gauge conf
+    explicit GaugeField(int L_):L(L_), T(L_), V(L_*L_*L_*L_), links(V*4*9, Complex(0.0,0.0)) {
+        for (size_t site = 0; site < V; site++) {
+            for (int mu = 0; mu<4; mu++) {
+                view_link(site, mu) = SU3::Identity();
+            }
+        }
+    }
+
     void hot_start(std::mt19937_64 &rng);
     void cold_start();
 
@@ -48,6 +57,6 @@ public:
 };
 
 void compute_staple(const GaugeField &field, const Geometry &geo, size_t site, int mu, SU3 &staple);
-void compute_staple(const GaugeField &field, const GeometryFrozen &geo, size_t site, int mu, SU3 &staple);
+void compute_staple(const GaugeField &field, const mpi::GeometryFrozen &geo, size_t site, int mu, SU3 &staple);
 
 #endif //INC_4D_MPI_GAUGEFIELD_H

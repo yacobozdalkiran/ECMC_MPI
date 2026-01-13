@@ -69,7 +69,7 @@ void compute_staple(const GaugeField &field, const Geometry &geo, size_t site, i
 }
 
 //Computes the sum of staples of link (site, mu)
-void compute_staple(const GaugeField &field, const GeometryFrozen &geo, size_t site, int mu, SU3 &staple) {
+void compute_staple(const GaugeField &field, const mpi::GeometryFrozen &geo, size_t site, int mu, SU3 &staple) {
     staple.setZero();
     int j = 0;
     while (j < 6) {

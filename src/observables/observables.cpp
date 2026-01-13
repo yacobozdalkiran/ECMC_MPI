@@ -22,11 +22,11 @@ double observables::mean_plaquette(const GaugeField &field, const Geometry &geo)
 }
 
 //Returns the value of the mean plaquette of the gauge field ignoring the frozen sites plaquettes
-double observables::mean_plaquette(const GaugeField &field, const GeometryFrozen &geo) {
+double observables::mean_plaquette(const GaugeField &field, const mpi::GeometryFrozen &geo) {
     double sum = 0.0;
     size_t counter = 0;
     SU3 staple;
-    for (int t = 1; t<geo.T-1; t++){
+    for (int t = 1; t<geo.L-1; t++){
         for (int z = 1; z<geo.L-1; z++) {
             for (int y = 1; y<geo.L-1; y++) {
                 for (int x = 1; x<geo.L-1; x++) {

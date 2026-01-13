@@ -24,10 +24,10 @@ add_executable(4d_MPI main.cpp
         src/ecmc/ecmc_frozen.h
         src/mpi/MpiTopology.cpp
         src/mpi/MpiTopology.h
-        src/gauge/LocalGaugeField.cpp
-        src/gauge/LocalGaugeField.h
         src/mpi/HalosExchange.cpp
-        src/mpi/HalosExchange.h)
+        src/mpi/HalosExchange.h
+        src/mpi/Halo.cpp
+        src/mpi/Halo.h)
 
 target_compile_options(4d_MPI PRIVATE
         -O3

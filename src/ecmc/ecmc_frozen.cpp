@@ -8,7 +8,7 @@
 #include "../su3/utils.h"
 
 //Computes the list of the 6 staples around a gauge link
-void ecmc_frozen::compute_list_staples(const GaugeField &field, const GeometryFrozen &geo, size_t site, int mu,
+void ecmc_frozen::compute_list_staples(const GaugeField &field, const mpi::GeometryFrozen &geo, size_t site, int mu,
     std::array<SU3, 6> &list_staple) {
     size_t index = 0;
     for (int nu = 0; nu < 4; nu++) {
@@ -170,7 +170,7 @@ size_t ecmc_frozen::selectVariable(const std::array<double,4> &probas, std::mt19
 }
 
 //Returns a new link, direction and R matrix for a lift
-std::pair<std::pair<size_t, int>, int> ecmc_frozen::lift_improved(const GaugeField &field, const GeometryFrozen &geo,
+std::pair<std::pair<size_t, int>, int> ecmc_frozen::lift_improved(const GaugeField &field, const mpi::GeometryFrozen &geo,
     size_t site, int mu, int j, SU3 &R, const SU3 &lambda_3, const std::vector<SU3> &set, std::mt19937_64 &rng) {
 
     std::array<std::pair<size_t, int>,4> links_plaquette_j; //We add the current link to get the plaquette
@@ -244,26 +244,23 @@ void ecmc_frozen::update(GaugeField &field, size_t site, int mu, double theta, i
 }
 
 //Returns a random non frozen site
-size_t ecmc_frozen::random_site(const GeometryFrozen &geo, std::mt19937_64 &rng) {
+size_t ecmc_frozen::random_site(const mpi::GeometryFrozen &geo, std::mt19937_64 &rng) {
     int L = geo.L;
-    int T = geo.T;
-    std::uniform_int_distribution random_space(1, L-2);
-    std::uniform_int_distribution random_time(1, T-2);
-    int x = random_space(rng);
-    int y = random_space(rng);
-    int z = random_space(rng);
-    int t = random_time(rng);
+    std::uniform_int_distribution random_coord(1, L-2);
+    int x = random_coord(rng);
+    int y = random_coord(rng);
+    int z = random_coord(rng);
+    int t = random_coord(rng);
     return geo.index(x,y,z,t);
 }
 
-std::vector<double> ecmc_frozen::samples_improved(GaugeField &field, const GeometryFrozen &geo, double beta,
-                                                  int N_samples, double param_theta_sample, double param_theta_refresh, bool poisson, double epsilon_set, std::mt19937_64 &rng) {
+std::vector<double> ecmc_frozen::samples_improved(GaugeField &field, const mpi::GeometryFrozen &geo, double beta,
+        int N_samples, double param_theta_sample, double param_theta_refresh, bool poisson, double epsilon_set,
+        std::mt19937_64 &rng) {
 
-
-if (param_theta_sample<param_theta_refresh) {
+    if (param_theta_sample<param_theta_refresh) {
         std::cerr << "Wrong args value, must have param_theta_sample>param_theta_refresh \n";
     }
-    size_t V = geo.V;
     //Set de matrices pour refresh R
     int N_set = 100;
     size_t lift_counter=0;

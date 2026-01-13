@@ -5,18 +5,23 @@
 #ifndef INC_4D_MPI_HALOSEXCHANGE_H
 #define INC_4D_MPI_HALOSEXCHANGE_H
 
-#include "../gauge/LocalGaugeField.h"
 #include "../geometry/GeometryFrozen.h"
 #include "MpiTopology.h"
+#include "Halo.h"
 #include <mpi.h>
 
+enum shift_type {
+    pos, //if the shift is in direction +coord
+    neg //if the shift is in direction -coord
+};
+
 namespace mpi::shift {
-    void fill_halo_send(LocalGaugeField &field, const GeometryFrozenMPI &geo, int mu, bool i_mu);
-    void shift_pos(mpi::LocalGaugeField &field, const mpi::GeometryFrozenMPI &geo, int mu);
-    void shift_neg(mpi::LocalGaugeField &field, const mpi::GeometryFrozenMPI &geo, int mu);
-    void exchange_halos(mpi::LocalGaugeField &field, int source, int dest, MPI_Comm comm);
-    void fill_lattice_with_halo_recv(mpi::LocalGaugeField &field, const mpi::GeometryFrozenMPI &geo, int mu, bool i_mu);
-    void n_full_shifts(mpi::LocalGaugeField &field, const mpi::GeometryFrozenMPI &geo, int n, int mu, const mpi::MpiTopology &topo);
+    void set_coord(Halo &halo, halo_coord coord_);
+    void fill_halo_send(GaugeField &field, const GeometryFrozen &geo, Halo &halo, shift_type stype);
+    void shift_field(GaugeField &field, const mpi::GeometryFrozen &geo, Halo &halo, shift_type stype);
+    void exchange_halos(Halo &halo, mpi::MpiTopology &topo, shift_type stype);
+    void fill_lattice_with_halo_recv(GaugeField &field, const mpi::GeometryFrozen &geo, Halo& halo, shift_type stype);
+    void shift(GaugeField &field, const mpi::GeometryFrozen &geo, Halo &halo, MpiTopology &topo, int L_shift, halo_coord coord_, shift_type stype);
 };
 
 
