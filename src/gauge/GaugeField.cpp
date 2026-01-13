@@ -3,8 +3,6 @@
 //
 
 #include "GaugeField.h"
-
-#include "../geometry/GeometryFrozen.h"
 #include "../su3/utils.h"
 
 
@@ -49,40 +47,3 @@ void GaugeField::projection_su3(size_t site, int mu){
     U /= exp(Complex(0.0, arg(det) / 3.0));
 }
 
-//Computes the sum of staples of link (site, mu)
-void compute_staple(const GaugeField &field, const Geometry &geo, size_t site, int mu, SU3 &staple) {
-    staple.setZero();
-    int j = 0;
-    while (j < 6) {
-
-        auto U0 = field.view_link_const(geo.get_link_staple(site,mu,j,0).first,geo.get_link_staple(site,mu,j,0).second);
-        auto U1 = field.view_link_const(geo.get_link_staple(site,mu,j,1).first, geo.get_link_staple(site,mu,j,1).second);
-        auto U2 = field.view_link_const(geo.get_link_staple(site,mu,j,2).first, geo.get_link_staple(site,mu,j,2).second);
-        staple += U0 * U1.adjoint() * U2.adjoint();
-
-        auto V0 = field.view_link_const(geo.get_link_staple(site,mu,j+1,0).first, geo.get_link_staple(site,mu,j+1,0).second);
-        auto V1 = field.view_link_const(geo.get_link_staple(site,mu,j+1,1).first, geo.get_link_staple(site,mu,j+1,1).second);
-        auto V2 = field.view_link_const(geo.get_link_staple(site,mu,j+1,2).first, geo.get_link_staple(site,mu,j+1,2).second);
-        staple += V0.adjoint() * V1.adjoint() * V2;
-        j += 2;
-    }
-}
-
-//Computes the sum of staples of link (site, mu)
-void compute_staple(const GaugeField &field, const mpi::GeometryFrozen &geo, size_t site, int mu, SU3 &staple) {
-    staple.setZero();
-    int j = 0;
-    while (j < 6) {
-
-        auto U0 = field.view_link_const(geo.get_link_staple(site,mu,j,0).first,geo.get_link_staple(site,mu,j,0).second);
-        auto U1 = field.view_link_const(geo.get_link_staple(site,mu,j,1).first, geo.get_link_staple(site,mu,j,1).second);
-        auto U2 = field.view_link_const(geo.get_link_staple(site,mu,j,2).first, geo.get_link_staple(site,mu,j,2).second);
-        staple += U0 * U1.adjoint() * U2.adjoint();
-
-        auto V0 = field.view_link_const(geo.get_link_staple(site,mu,j+1,0).first, geo.get_link_staple(site,mu,j+1,0).second);
-        auto V1 = field.view_link_const(geo.get_link_staple(site,mu,j+1,1).first, geo.get_link_staple(site,mu,j+1,1).second);
-        auto V2 = field.view_link_const(geo.get_link_staple(site,mu,j+1,2).first, geo.get_link_staple(site,mu,j+1,2).second);
-        staple += V0.adjoint() * V1.adjoint() * V2;
-        j += 2;
-    }
-}

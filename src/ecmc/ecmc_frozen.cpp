@@ -204,7 +204,7 @@ std::pair<std::pair<size_t, int>, int> ecmc_frozen::lift_improved(const GaugeFie
     }
     for (size_t i = 0; i < 4; i++) {
         if (!geo.is_frozen(links_plaquette_j[i].first, links_plaquette_j[i].second)) probas[i] = -(Complex(0.0,1.0) * lambda_3 * R.adjoint() * P[i]*R).trace().real();
-        else probas[i] = 0;
+        else probas[i] = 0.0;
         sign_dS[i] = dsign(probas[i]);
         probas[i] = abs(probas[i]);
         abs_dS[i] = probas[i];

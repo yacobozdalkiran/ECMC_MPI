@@ -25,8 +25,8 @@ void in_main_MPI_test(int argc, char* argv[]) {
     mpi::MpiTopology topo(2);
     std::cout << "Rank :" << topo.rank << ", local :" << topo.local_rank << std::endl;
     mpi::GeometryFrozen geo(4);
-    GaugeField field(4);
-    Halo halo(2, 4, X);
+    GaugeField field(geo);
+    Halo halo(2, geo, X);
     mpi::shift::shift(field, geo, halo, topo, 2, X, pos);
     MPI_Finalize();
 }

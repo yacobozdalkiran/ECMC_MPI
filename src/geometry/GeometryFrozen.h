@@ -20,7 +20,6 @@ namespace mpi {
 
     public:
         explicit GeometryFrozen(int L);
-
         //Index function for links
         [[nodiscard]] size_t index(int x, int y, int z, int t) const {
             return ((static_cast<size_t>(t)*L + z) * L + y)*L + x;
@@ -40,8 +39,6 @@ namespace mpi {
         [[nodiscard]] static size_t index_frozen(size_t site, int mu) {
             return site*4 + mu;
         }
-
-
 
         //Returns the neighbor of site in direction +mu if dir=0, -mu if dir=1
         [[nodiscard]] size_t get_neigh(size_t site, int mu, int dir) const {

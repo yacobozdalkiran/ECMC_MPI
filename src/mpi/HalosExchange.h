@@ -23,5 +23,10 @@ namespace mpi::shift {
     void shift(GaugeField &field, const mpi::GeometryFrozen &geo, Halo &halo, MpiTopology &topo, int L_shift, halo_coord coord_, shift_type stype);
 };
 
+namespace mpi::observables {
+    void fill_halo_obs_send(const GaugeField &field, const mpi::GeometryFrozen &geo, HaloObs &halo_obs);
+    void exchange_halos_obs(HaloObs &halo_obs, mpi::MpiTopology &topo, MPI_Request* reqs);
+}
+
 
 #endif //INC_4D_MPI_HALOSEXCHANGE_H

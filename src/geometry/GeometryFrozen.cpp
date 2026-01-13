@@ -4,6 +4,8 @@
 
 #include "GeometryFrozen.h"
 
+//TODO:modifier neighbors et links_staples qui sont périodiques
+
 mpi::GeometryFrozen::GeometryFrozen(int L_) {
     L = L_;
     V = L*L*L*L;

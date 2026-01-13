@@ -7,6 +7,7 @@
 
 #include "../gauge/GaugeField.h"
 
+//Possible coordinates of the shifts
 enum halo_coord {
     X,
     Y,
@@ -14,21 +15,35 @@ enum halo_coord {
     T
 };
 
+//Used to access the different buffers of HaloObs
+enum face {
+    fx0, fxL,
+    fy0, fyL,
+    fz0, fzL,
+    ft0, ftL,
+};
 
+//Used to acces the different buffers of HaloObs
+enum buf {
+    send,
+    recv
+};
+
+//Halos used to shift the gauge configurations between all nodes
 class Halo {
 public:
     std::vector<Complex> send;
     std::vector<Complex> recv;
     halo_coord coord; //Direction of the shift
-    int L_shift; //Length of the halo, such that V_halo = L*L*L*L_shift
+    int L_shift; //Length of the shift, such that V_halo = L*L*L*L_shift
     int L; //Size of the square lattice
     int V_halo; //Volume (number of sites) of the halos
 
     //Creates a shift halo of size size_ for a square gauge configuration of size L_**4
     //halo_coord is the axis of the shift (X,Y,Z,T)
-    explicit Halo(int L_shift_, int L_, halo_coord coord_) {
+    explicit Halo(int L_shift_, const mpi::GeometryFrozen &geo, halo_coord coord_) {
         L_shift = L_shift_;
-        L = L_;
+        L = geo.L;
         coord = coord_;
         V_halo = L*L*L*L_shift;
         send.resize(V_halo*4*9);
@@ -67,6 +82,123 @@ public:
     //Const mapping of halo_recv to SU3 matrices
     [[nodiscard]] Eigen::Map<const SU3> view_halo_rec_const(size_t site, int mu) const {
         return Eigen::Map<const SU3>(&recv[(site * 4 + mu) * 9]);
+    }
+};
+
+//Halos used to compute observables (mean plaquette for instance)
+class HaloObs {
+public:
+    std::vector<Complex> fx0_recv; //Halo containing the face x=L-1 of neighbor in direction x-1
+    std::vector<Complex> fxL_recv; //Halo containing the face x=0 of neighbor in direction x+1
+    std::vector<Complex> fy0_recv; //Halo containing the face y=L-1 of neighbor in direction y-1
+    std::vector<Complex> fyL_recv; //Halo containing the face y=0 of neighbor in direction y+1
+    std::vector<Complex> fz0_recv; //Halo containing the face z=L-1 of neighbor in direction z-1
+    std::vector<Complex> fzL_recv; //Halo containing the face z=0 of neighbor in direction z+1
+    std::vector<Complex> ft0_recv; //Halo containing the face t=L-1 of neighbor in direction t-1
+    std::vector<Complex> ftL_recv; //Halo containing the face t=0 of neighbor in direction t+1
+
+    std::vector<Complex> fx0_send; //Halo containing the face x=0 of the current node
+    std::vector<Complex> fxL_send; //Halo containing the face x=L-1 of the current node
+    std::vector<Complex> fy0_send; //Halo containing the face y=0 of the current node
+    std::vector<Complex> fyL_send; //Halo containing the face y=L-1 of the current node
+    std::vector<Complex> fz0_send; //Halo containing the face z=0 of the current node
+    std::vector<Complex> fzL_send; //Halo containing the face z=L-1 of the current node
+    std::vector<Complex> ft0_send; //Halo containing the face t=0 of the current node
+    std::vector<Complex> ftL_send; //Halo containing the face t=L-1 of the current node
+
+    int L;
+    int V;
+
+    HaloObs(const mpi::GeometryFrozen &geo) {
+        L = geo.L;
+        V = L*L*L;
+        fx0_recv.resize(L*L*L*9*4);
+        fxL_recv.resize(L*L*L*9*4);
+        fy0_recv.resize(L*L*L*9*4);
+        fyL_recv.resize(L*L*L*9*4);
+        fz0_recv.resize(L*L*L*9*4);
+        fzL_recv.resize(L*L*L*9*4);
+        ft0_recv.resize(L*L*L*9*4);
+        ftL_recv.resize(L*L*L*9*4);
+
+        fx0_send.resize(L*L*L*9*4);
+        fxL_send.resize(L*L*L*9*4);
+        fy0_send.resize(L*L*L*9*4);
+        fyL_send.resize(L*L*L*9*4);
+        fz0_send.resize(L*L*L*9*4);
+        fzL_send.resize(L*L*L*9*4);
+        ft0_send.resize(L*L*L*9*4);
+        ftL_send.resize(L*L*L*9*4);
+    }
+
+    //Returns the index of the site corresponding to (c1,c2,c3) with order x,y,z,t
+    [[nodiscard]] size_t index_halo_obs(int c1, int c2, int c3) const {
+        return (c3*L + c2)*L+c1;
+    }
+
+    //Non const mapping of the halos of HaloObs instance to SU3 matrices
+    [[nodiscard]] SU3 view_link_halo_obs(face f, buf b, size_t site, int mu) {
+        if (b == send) {
+            if (f == fx0) return Eigen::Map<SU3>(&fx0_send[(site * 4 + mu) * 9]);
+            if (f == fxL) return Eigen::Map<SU3>(&fxL_send[(site * 4 + mu) * 9]);
+            if (f == fy0) return Eigen::Map<SU3>(&fy0_send[(site * 4 + mu) * 9]);
+            if (f == fyL) return Eigen::Map<SU3>(&fyL_send[(site * 4 + mu) * 9]);
+            if (f == fz0) return Eigen::Map<SU3>(&fz0_send[(site * 4 + mu) * 9]);
+            if (f == fzL) return Eigen::Map<SU3>(&fzL_send[(site * 4 + mu) * 9]);
+            if (f == ft0) return Eigen::Map<SU3>(&ft0_send[(site * 4 + mu) * 9]);
+            if (f == ftL) return Eigen::Map<SU3>(&ftL_send[(site * 4 + mu) * 9]);
+        }
+        if (b==recv) {
+            if (f == fx0) return Eigen::Map<SU3>(&fx0_recv[(site * 4 + mu) * 9]);
+            if (f == fxL) return Eigen::Map<SU3>(&fxL_recv[(site * 4 + mu) * 9]);
+            if (f == fy0) return Eigen::Map<SU3>(&fy0_recv[(site * 4 + mu) * 9]);
+            if (f == fyL) return Eigen::Map<SU3>(&fyL_recv[(site * 4 + mu) * 9]);
+            if (f == fz0) return Eigen::Map<SU3>(&fz0_recv[(site * 4 + mu) * 9]);
+            if (f == fzL) return Eigen::Map<SU3>(&fzL_recv[(site * 4 + mu) * 9]);
+            if (f == ft0) return Eigen::Map<SU3>(&ft0_recv[(site * 4 + mu) * 9]);
+            if (f == ftL) return Eigen::Map<SU3>(&ftL_recv[(site * 4 + mu) * 9]);
+        }
+        std::cerr << "Wrong acces\n";
+        return SU3::Zero();
+    }
+
+    //Const mapping of the halos of HaloObs instance to SU3 matrices
+    [[nodiscard]] SU3 view_link_halo_obs_const(face f, buf b, size_t site, int mu) const {
+        if (b == send) {
+            if (f == fx0) return Eigen::Map<SU3 const>(&fx0_send[(site * 4 + mu) * 9]);
+            if (f == fxL) return Eigen::Map<SU3 const>(&fxL_send[(site * 4 + mu) * 9]);
+            if (f == fy0) return Eigen::Map<SU3 const>(&fy0_send[(site * 4 + mu) * 9]);
+            if (f == fyL) return Eigen::Map<SU3 const>(&fyL_send[(site * 4 + mu) * 9]);
+            if (f == fz0) return Eigen::Map<SU3 const>(&fz0_send[(site * 4 + mu) * 9]);
+            if (f == fzL) return Eigen::Map<SU3 const>(&fzL_send[(site * 4 + mu) * 9]);
+            if (f == ft0) return Eigen::Map<SU3 const>(&ft0_send[(site * 4 + mu) * 9]);
+            if (f == ftL) return Eigen::Map<SU3 const>(&ftL_send[(site * 4 + mu) * 9]);
+        }
+        if (b==recv) {
+            if (f == fx0) return Eigen::Map<SU3 const>(&fx0_recv[(site * 4 + mu) * 9]);
+            if (f == fxL) return Eigen::Map<SU3 const>(&fxL_recv[(site * 4 + mu) * 9]);
+            if (f == fy0) return Eigen::Map<SU3 const>(&fy0_recv[(site * 4 + mu) * 9]);
+            if (f == fyL) return Eigen::Map<SU3 const>(&fyL_recv[(site * 4 + mu) * 9]);
+            if (f == fz0) return Eigen::Map<SU3 const>(&fz0_recv[(site * 4 + mu) * 9]);
+            if (f == fzL) return Eigen::Map<SU3 const>(&fzL_recv[(site * 4 + mu) * 9]);
+            if (f == ft0) return Eigen::Map<SU3 const>(&ft0_recv[(site * 4 + mu) * 9]);
+            if (f == ftL) return Eigen::Map<SU3 const>(&ftL_recv[(site * 4 + mu) * 9]);
+        }
+        std::cerr << "Wrong acces\n";
+        return SU3::Zero();
+    }
+
+    //Returns the link at (x,y,z,t,mu) taking into account the halos_obs
+    [[nodiscard]] SU3 get_link_with_halo_obs(const GaugeField &field, const mpi::GeometryFrozen &geo, int x, int y, int z, int t, int mu) const {
+        int L = geo.L;
+        if (x>0 && y>0 && z>0 && t>0 && x<L-1 && y<L-1 && z<L-1 && t<L-1) {
+            size_t site = geo.index(x,y,z,t);
+            return field.view_link_const(site, mu);
+        }
+        if (x==0) {
+            size_t site = index_halo_obs(y,z,t);
+            return view_link_halo_obs_const()
+        }
     }
 };
 
