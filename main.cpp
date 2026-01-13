@@ -32,6 +32,6 @@ void in_main_MPI_test(int argc, char* argv[]) {
 }
 
 int main(int argc, char* argv[]) {
-    in_main_MPI_test(argc, argv);
+    in_main_ecmc_frozen(argv);
     return 0;
 }

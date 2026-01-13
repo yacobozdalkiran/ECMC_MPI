@@ -17,7 +17,7 @@ void mpi::shift::set_coord(Halo &halo, halo_coord coord_) {
 //Fills the send halo with the corresponding part of the lattice :
 //from coord = L - L_shift to coord = L-1 if stype = pos
 //from coord = 0 to coord = L_shift-1 if stype = neg
-void mpi::shift::fill_halo_send(GaugeField &field, const GeometryFrozen &geo, Halo &halo,
+void mpi::shift::fill_halo_send(const GaugeField &field, const GeometryFrozen &geo, Halo &halo,
     shift_type stype) {
     if (halo.coord == X) {
         for (int t = 0; t < geo.L; t++) {
