@@ -3,36 +3,35 @@
 //
 
 #include "GeometryFrozen.h"
-
-//TODO:modifier neighbors et links_staples qui sont périodiques
+#include <cstdint>
 
 mpi::GeometryFrozen::GeometryFrozen(int L_) {
     L = L_;
     V = L*L*L*L;
-    neighbors_flat.resize(V*8);
-    for (int t = 0; t < L; t++) {
-        for (int z = 0; z < L; z++) {
-            for (int y = 0; y < L; y++) {
-                for (int x = 0; x < L; x++) {
+    neighbors_flat.resize(V*8, SIZE_MAX);
+    for (int t = 1; t < L-1; t++) {
+        for (int z = 1; z < L-1; z++) {
+            for (int y = 1; y < L-1; y++) {
+                for (int x = 1; x < L-1; x++) {
                     size_t i = index(x, y, z, t);
-                    neighbors_flat[index_neigh(i,0,0)] = index((x + 1) % L, y, z, t);
-                    neighbors_flat[index_neigh(i,0,1)] = index((x - 1 + L) % L, y, z, t);
-                    neighbors_flat[index_neigh(i,1,0)] = index(x, (y + 1) % L, z, t);
-                    neighbors_flat[index_neigh(i,1,1)] = index(x, (y - 1 + L) % L, z, t);
-                    neighbors_flat[index_neigh(i,2,0)] = index(x, y, (z + 1) % L, t);
-                    neighbors_flat[index_neigh(i,2,1)] = index(x, y, (z - 1 + L) % L, t);
-                    neighbors_flat[index_neigh(i,3,0)] = index(x, y, z, (t + 1) % L);
-                    neighbors_flat[index_neigh(i,3,1)] = index(x, y, z, (t - 1 + L) % L);
+                    neighbors_flat[index_neigh(i,0,0)] = index((x + 1), y, z, t);
+                    neighbors_flat[index_neigh(i,0,1)] = index((x - 1), y, z, t);
+                    neighbors_flat[index_neigh(i,1,0)] = index(x, (y + 1), z, t);
+                    neighbors_flat[index_neigh(i,1,1)] = index(x, (y - 1), z, t);
+                    neighbors_flat[index_neigh(i,2,0)] = index(x, y, (z + 1), t);
+                    neighbors_flat[index_neigh(i,2,1)] = index(x, y, (z - 1), t);
+                    neighbors_flat[index_neigh(i,3,0)] = index(x, y, z, (t + 1));
+                    neighbors_flat[index_neigh(i,3,1)] = index(x, y, z, (t - 1));
                 }
             }
         }
     }
 
-    links_staples_flat.resize(V*3*6*4);
-    for (int t = 0; t < L; t++) {
-        for (int z = 0; z < L; z++) {
-            for (int y = 0; y < L; y++) {
-                for (int x = 0; x < L; x++) {
+    links_staples_flat.resize(V*3*6*4, std::make_pair(SIZE_MAX, -1));
+    for (int t = 1; t < L-1; t++) {
+        for (int z = 1; z < L-1; z++) {
+            for (int y = 1; y < L-1; y++) {
+                for (int x = 1; x < L-1; x++) {
                     size_t site = index(x, y, z, t); //x
                     for (int mu = 0; mu < 4; mu++) {
                         int j = 0;
