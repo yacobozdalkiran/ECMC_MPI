@@ -3,5 +3,5 @@ rm -rf build
 mkdir build
 cd build
 cmake .. -DCMAKE_C_COMPILER=icx -DCMAKE_CXX_COMPILER=icpx
-make -j 10
+make -j $(nproc) VERBOSE=1
 cd ..
