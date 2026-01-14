@@ -9,4 +9,4 @@
 #SBATCH --partition=cpu_short
 
 # Run MPI script
-srun build/gauge_ecmc_mpi ../input.txt
+srun build/gauge_ecmc_mpi inputs/test.txt
