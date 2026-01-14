@@ -315,11 +315,6 @@ std::vector<double> mpi::ecmc::samples_improved(GaugeField &field, const mpi::Ge
 
     SU3 R = random_su3(rng);
 
-
-    if (topo.rank == 0) {
-        std::cout << "Beta = " << beta << "\n";
-    }
-
     int samples = 0;
     std::array<double,2> deltas = {0.0,0.0};
     //size_t event_counter = 0;

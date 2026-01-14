@@ -18,7 +18,7 @@ namespace fs = std::filesystem;
 //Saves a vector of doubles in ../data/filename.txt
 void io::save_double(const std::vector<double> &data, const std::string &filename, int precision) {
     //Create a data folder if doesn't exists
-    fs::path dir("/data");
+    fs::path dir("data");
 
     try {
         if (!fs::exists(dir)) {
@@ -58,7 +58,7 @@ void io::save_double_params(const std::vector<double> &data, const RunParams &pa
     int precision) {
     io::save_double(data, filename, precision);
     //No need to create data folder
-    fs::path dir("/data");
+    fs::path dir("data");
 
     //We create the params file
     std::string param_filename = filename + "_params.txt";

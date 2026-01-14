@@ -119,7 +119,24 @@ int main(int argc, char* argv[]) {
     //Charging the parameters of the run
     RunParams params;
     read_params(params, rank, argv[1]);
+
+    //Measuring time
+    MPI_Barrier(MPI_COMM_WORLD);
+    double start_time = MPI_Wtime();
+
     generate(params);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    double end_time = MPI_Wtime();
+
+    if (rank == 0) {
+        double total_time = end_time - start_time;
+        std::cout << std::fixed << std::setprecision(4);
+        std::cout << "\n==========================================" << std::endl;
+        std::cout << " Total execution time : " << total_time << " seconds" << std::endl;
+        std::cout << "==========================================\n" << std::endl;
+    }
+
     MPI_Finalize();
     return 0;
 }
