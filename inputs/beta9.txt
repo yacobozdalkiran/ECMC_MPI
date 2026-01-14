@@ -5,7 +5,7 @@ L_shift=3
 n_shift=16
 stype_pos=true
 
-beta=6
+beta=9
 N_samples=200
 param_theta_sample=12000
 param_theta_refresh=5000
