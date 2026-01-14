@@ -4,3 +4,4 @@ mkdir build
 cd build
 cmake .. -DCMAKE_C_COMPILER=icx -DCMAKE_CXX_COMPILER=icpx
 make -j 10
+cd ..
