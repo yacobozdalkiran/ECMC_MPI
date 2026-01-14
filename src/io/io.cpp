@@ -12,7 +12,6 @@
 
 
 #include "io.h"
-#include "../../include/cxxopts.hpp"
 
 namespace fs = std::filesystem;
 
@@ -103,12 +102,13 @@ void io::load_params(const std::string& filename, RunParams& rp) {
     if (config.count("n_core_dims")) rp.n_core_dims = std::stoi(config["n_core_dims"]);
     if (config.count("cold_start"))  rp.cold_start = (config["cold_start"] == "true");
     if (config.count("L_shift"))     rp.L_shift = std::stoi(config["L_shift"]);
+    if (config.count("n_shift"))     rp.n_shift = std::stoi(config["n_shift"]);
 
     //ECMC params
-    if (config.count("beta"))      rp.ecmc_params.beta = std::stod(config["beta"]);
-    if (config.count("N_samples")) rp.ecmc_params.N_samples = std::stoi(config["N_samples"]);
-    if (config.count("param_theta_sample")) rp.ecmc_params.param_theta_sample = std::stod(config["param_theta_sample"]);
+    if (config.count("beta"))                rp.ecmc_params.beta = std::stod(config["beta"]);
+    if (config.count("N_samples"))           rp.ecmc_params.N_samples = std::stoi(config["N_samples"]);
+    if (config.count("param_theta_sample"))  rp.ecmc_params.param_theta_sample = std::stod(config["param_theta_sample"]);
     if (config.count("param_theta_refresh")) rp.ecmc_params.param_theta_refresh = std::stod(config["param_theta_refresh"]);
-    if (config.count("poisson"))   rp.ecmc_params.poisson = (config["poisson"] == "true");
-    if (config.count("epsilon_set")) rp.ecmc_params.epsilon_set = std::stod(config["epsilon_set"]);
+    if (config.count("poisson"))             rp.ecmc_params.poisson = (config["poisson"] == "true");
+    if (config.count("epsilon_set"))         rp.ecmc_params.epsilon_set = std::stod(config["epsilon_set"]);
 }

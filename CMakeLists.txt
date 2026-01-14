@@ -16,9 +16,7 @@ add_executable(gauge_ecmc_mpi src/bin/gauge_ecmc_mpi.cpp
         src/mpi/HalosExchange.cpp
         src/mpi/Halo.h
         src/ecmc/ecmc_mpi.cpp
-        include/cxxopts.hpp
         src/io/io.cpp
-        src/io/params.cpp
         src/io/params.h
 )
 
