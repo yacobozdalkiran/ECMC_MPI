@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=beta_array
+#SBATCH --job-name=beta
 #SBATCH --output=%x_%a_%A.o
 #SBATCH --time=02:00:00
 #SBATCH --nodes=1
