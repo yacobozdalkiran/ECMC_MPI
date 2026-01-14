@@ -50,7 +50,7 @@ void io::save_double(const std::vector<double> &data, const std::string &filenam
         file << x << "\n";
     }
     file.close();
-    std::cout << "Data written in " << filepath << "\n";
+    std::cout << "\nData written in " << filepath << "\n";
 }
 
 //Saves a vector of doubles in ../data/filename and the run parameters in ../data/filename_params

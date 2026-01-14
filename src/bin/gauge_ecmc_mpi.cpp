@@ -52,19 +52,34 @@ void generate(const RunParams &run_params) {
     //Space reserved for results
     std::vector<std::vector<double>> plaquette(total_shifts);
 
+    //Print parameters
+    if (topo.rank == 0) {
+        std::cout << "==========================================" << std::endl;
+        std::cout << "Total lattice size : " << L*n_core_dims  << "\n";
+        std::cout << "Local lattice size : " << L << "\n";
+        std::cout << "Beta : " << ecmc_params.beta << "\n";
+        std::cout << "Total number of shifts : " << n_shift*4 << "\n";
+        std::cout << "Number of samples per shift : " << ecmc_params.N_samples << "\n";
+        std::cout << "==========================================" << std::endl;
+    }
+
     for (int gshiftc = 0; gshiftc<n_shift; gshiftc++) {
+        if (topo.rank == 0) std::cout << "Shift " << gshiftc*4 << " (X)...\n";
         sp.coord=X;
         mpi::shift::shift(field, geo, halo_shift, topo, sp);
         plaquette[gshiftc*4] = mpi::ecmc::samples_improved(field, geo, ecmc_params, rng, halo_obs, topo);
 
+        if (topo.rank == 0) std::cout << "Shift " << gshiftc*4+1 << " (Y)...\n";
         sp.coord=Y;
         mpi::shift::shift(field, geo, halo_shift, topo, sp);
         plaquette[gshiftc*4+1] = mpi::ecmc::samples_improved(field, geo, ecmc_params, rng, halo_obs, topo);
 
+        if (topo.rank == 0) std::cout << "Shift " << gshiftc*4+2 << " (Z)...\n";
         sp.coord=Z;
         mpi::shift::shift(field, geo, halo_shift, topo, sp);
         plaquette[gshiftc*4+2] = mpi::ecmc::samples_improved(field, geo, ecmc_params, rng, halo_obs, topo);
 
+        if (topo.rank == 0) std::cout << "Shift " << gshiftc*4+3 << " (T)...\n";
         sp.coord=T;
         mpi::shift::shift(field, geo, halo_shift, topo, sp);
         plaquette[gshiftc*4+3] = mpi::ecmc::samples_improved(field, geo, ecmc_params, rng, halo_obs, topo);
