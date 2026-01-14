@@ -8,8 +8,8 @@
 #include <random>
 #include "../gauge/GaugeField.h"
 #include "../observables/observables.h"
+#include "../io/params.h"
 
-//TODO:créer une struct pour les paramètres d'ECMC
 
 namespace mpi::ecmc {
     void compute_list_staples(const GaugeField &field, const mpi::GeometryFrozen &geo, size_t site, int mu, std::array<SU3,6> &list_staple);
@@ -21,8 +21,7 @@ namespace mpi::ecmc {
         SU3 &R, const SU3 &lambda_3, const std::vector<SU3> &set, std::mt19937_64 &rng);
     void update(GaugeField &field, size_t site, int mu, double theta, int epsilon, const SU3 &R);
     size_t random_site(const mpi::GeometryFrozen &geo, std::mt19937_64 &rng);
-    std::vector<double> samples_improved(GaugeField &field, const mpi::GeometryFrozen &geo, double beta, int N_samples,
-    double param_theta_sample, double param_theta_refresh, bool poisson, double epsilon_set, std::mt19937_64 &rng, HaloObs &halo_obs, mpi::MpiTopology &topo);
+    std::vector<double> samples_improved(GaugeField &field, const mpi::GeometryFrozen &geo, const ECMCParams &params, std::mt19937_64 &rng, HaloObs &halo_obs, mpi::MpiTopology &topo);
 }
 
 #endif //INC_4D_MPI_ECMC_MPI_H

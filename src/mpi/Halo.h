@@ -8,8 +8,18 @@
 #include "../gauge/GaugeField.h"
 #include <iostream>
 
+#include "../io/params.h"
+
+//Direction of the shift
+enum shift_type {
+    unset,
+    pos, //if the shift is in direction +coord
+    neg //if the shift is in direction -coord
+};
+
 //Possible coordinates of the shifts
 enum halo_coord {
+    UNSET,
     X,
     Y,
     Z,
@@ -30,37 +40,43 @@ enum buf {
     recv
 };
 
+
+struct ShiftParams {
+    shift_type stype=pos;
+    halo_coord coord=UNSET;
+    int L_shift=0;
+};
+
+
 //Halos used to shift the gauge configurations between all nodes
 class Halo {
 public:
     std::vector<Complex> send;
     std::vector<Complex> recv;
-    halo_coord coord; //Direction of the shift
-    int L_shift; //Length of the shift, such that V_halo = L*L*L*L_shift
+    int L_shift; //Length of the max shift, such that V_halo = L*L*L*L_shift
     int L; //Size of the square lattice
     int V_halo; //Volume (number of sites) of the halos
 
     //Creates a shift halo of size size_ for a square gauge configuration of size L_**4
     //halo_coord is the axis of the shift (X,Y,Z,T)
-    explicit Halo(int L_shift_, const mpi::GeometryFrozen &geo, halo_coord coord_) {
+    explicit Halo(int L_shift_, const mpi::GeometryFrozen &geo) {
         L_shift = L_shift_;
         L = geo.L;
-        coord = coord_;
         V_halo = L*L*L*L_shift;
         send.resize(V_halo*4*9);
         recv.resize(V_halo*4*9);
     }
 
     //Index function for local coordinates x,y,z,t of halo send/recv
-    [[nodiscard]] size_t index_halo(int x, int y, int z, int t) const {
+    [[nodiscard]] size_t index_halo(int x, int y, int z, int t, const ShiftParams &sp) const {
         size_t index{};
-        if (coord == X)
+        if (sp.coord == X)
             index = ((static_cast<size_t>(t) * L + z) * L + y) * L_shift + x;
-        if (coord == Y)
+        if (sp.coord == Y)
             index = ((static_cast<size_t>(t) * L + z) * L_shift+ y) * L + x;
-        if (coord == Z)
+        if (sp.coord == Z)
             index =  ((static_cast<size_t>(t) * L_shift + z) * L + y)* L + x;
-        if (coord == T)
+        if (sp.coord == T)
             index =  ((static_cast<size_t>(t)*L + z) * L + y)* L + x;
         return index;
     }

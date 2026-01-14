@@ -4,8 +4,9 @@
 
 #include "MpiTopology.h"
 
-mpi::MpiTopology::MpiTopology(int n_core_dim): local_coords{0,0,0,0} {
+mpi::MpiTopology::MpiTopology(int n_core_dim_): local_coords{0,0,0,0} {
     rank = size = local_rank = x0 = xL = y0 = yL = z0 = zL = t0 = tL = 0;
+    n_core_dim = n_core_dim_;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     //Creating cartesian topology

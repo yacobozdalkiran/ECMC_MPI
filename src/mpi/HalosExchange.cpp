@@ -4,30 +4,26 @@
 
 #define NDIMS 4
 
-#include "HalosExchange.h"
 #include <iostream>
 
+#include "HalosExchange.h"
 #include "MpiTopology.h"
 
-//Sets the coordinate of the shift in halo. Must be called before the other functions
-void mpi::shift::set_coord(Halo &halo, halo_coord coord_) {
-    halo.coord = coord_;
-}
 
 //Fills the send halo with the corresponding part of the lattice :
 //from coord = L - L_shift to coord = L-1 if stype = pos
 //from coord = 0 to coord = L_shift-1 if stype = neg
 void mpi::shift::fill_halo_send(const GaugeField &field, const GeometryFrozen &geo, Halo &halo,
-    shift_type stype) {
-    if (halo.coord == X) {
+    const ShiftParams &sp) {
+    if (sp.coord == X) {
         for (int t = 0; t < geo.L; t++) {
             for (int z = 0; z < geo.L; z++) {
                 for (int y = 0; y < geo.L; y++) {
                         for (int x_local = 0; x_local < halo.L_shift; x_local++){
                             int x_glob = x_local;
-                            if (stype == pos) x_glob = x_local + geo.L - halo.L_shift;
+                            if (sp.stype == pos) x_glob = x_local + geo.L - halo.L_shift;
                             size_t site_glob = geo.index(x_glob, y, z, t);
-                            size_t site_loc = halo.index_halo(x_local, y, z, t);
+                            size_t site_loc = halo.index_halo(x_local, y, z, t, sp);
                             for (int mu = 0; mu < 4; mu++) {
                                 halo.view_halo_send(site_loc, mu) = field.view_link_const(site_glob, mu);
                             }
@@ -37,15 +33,15 @@ void mpi::shift::fill_halo_send(const GaugeField &field, const GeometryFrozen &g
         }
     }
 
-    if (halo.coord == Y) {
+    if (sp.coord == Y) {
         for (int t = 0; t < geo.L; t++) {
             for (int z = 0; z < geo.L; z++) {
                 for (int y_local = 0; y_local < halo.L_shift; y_local++) {
                     for (int x = 0; x < geo.L; x++) {
                         int y_glob = y_local;
-                        if (stype == pos) y_glob = y_local + geo.L - halo.L_shift;
+                        if (sp.stype == pos) y_glob = y_local + geo.L - halo.L_shift;
                         size_t site_glob = geo.index(x, y_glob, z, t);
-                        size_t site_loc = halo.index_halo(x, y_local, z, t);
+                        size_t site_loc = halo.index_halo(x, y_local, z, t, sp);
                         for (int mu = 0; mu < 4; mu++) {
                             halo.view_halo_send(site_loc, mu) = field.view_link_const(site_glob, mu);
                         }
@@ -54,15 +50,15 @@ void mpi::shift::fill_halo_send(const GaugeField &field, const GeometryFrozen &g
             }
         }
     }
-    if (halo.coord == Z) {
+    if (sp.coord == Z) {
         for (int t = 0; t < geo.L; t++) {
             for (int z_local = 0; z_local < halo.L_shift; z_local++) {
                 for (int y = 0; y < geo.L; y++) {
                     for (int x = 0; x < geo.L; x++) {
                         int z_glob = z_local;
-                        if (stype == pos) z_glob = z_local + geo.L - halo.L_shift;
+                        if (sp.stype == pos) z_glob = z_local + geo.L - halo.L_shift;
                         size_t site_glob = geo.index(x, y, z_glob, t);
-                        size_t site_loc = halo.index_halo(x, y, z_local, t);
+                        size_t site_loc = halo.index_halo(x, y, z_local, t, sp);
                         for (int mu = 0; mu < 4; mu++) {
                             halo.view_halo_send(site_loc, mu) = field.view_link_const(site_glob, mu);
                         }
@@ -71,15 +67,15 @@ void mpi::shift::fill_halo_send(const GaugeField &field, const GeometryFrozen &g
             }
         }
     }
-    if (halo.coord == T) {
+    if (sp.coord == T) {
         for (int t_local= 0; t_local < halo.L_shift; t_local++) {
             for (int z = 0; z < geo.L; z++) {
                 for (int y = 0; y < geo.L; y++) {
                     for (int x = 0; x < geo.L; x++) {
                         int t_glob = t_local;
-                        if (stype == pos) t_glob = t_local + geo.L - halo.L_shift;
+                        if (sp.stype == pos) t_glob = t_local + geo.L - halo.L_shift;
                         size_t site_glob = geo.index(x, y, z, t_glob);
-                        size_t site_loc = halo.index_halo(x, y, z, t_local);
+                        size_t site_loc = halo.index_halo(x, y, z, t_local, sp);
                         for (int mu = 0; mu < 4; mu++) {
                             halo.view_halo_send(site_loc, mu) = field.view_link_const(site_glob, mu);
                         }
@@ -93,12 +89,12 @@ void mpi::shift::fill_halo_send(const GaugeField &field, const GeometryFrozen &g
 
 //Shifts the value of all the links of the lattice of L_shift in direction +coord if stype = pos, -coord if stpye = neg
 void mpi::shift::shift_field(GaugeField &field, const mpi::GeometryFrozen &geo, Halo &halo,
-    shift_type stype) {
+    const ShiftParams &sp) {
     int L = geo.L;
     int L_shift = halo.L_shift;
-    halo_coord coord = halo.coord;
+    halo_coord coord = sp.coord;
     //We want to avoid cache misses -> we follow the layout of the gauge field and have to write a different loop each time
-    if (stype == pos) {
+    if (sp.stype == pos) {
         //The content of the field btw 0 and (L-1-L_shift) -> L_shift - L-1
         if (coord == X) {
             for (int t = 0; t<L; t++) {
@@ -164,7 +160,7 @@ void mpi::shift::shift_field(GaugeField &field, const mpi::GeometryFrozen &geo, 
             }
         }
     }
-    if (stype == neg) {
+    if (sp.stype == neg) {
         //The content of the field btw L_shift and (L-1) -> 0 - (L-1-L_shift)
         if (coord == X) {
             for (int t = 0; t<L; t++) {
@@ -233,44 +229,44 @@ void mpi::shift::shift_field(GaugeField &field, const mpi::GeometryFrozen &geo, 
 }
 
 //Fills the halo_recv of the dest node with the content of the halo_send of the source node
-void mpi::shift::exchange_halos(Halo &halo, mpi::MpiTopology &topo, shift_type stype, MPI_Request* reqs) {
+void mpi::shift::exchange_halos(Halo &halo, mpi::MpiTopology &topo, const ShiftParams &sp, MPI_Request* reqs) {
     int source{}, dest{};
-    if (halo.coord == X) {
-        if (stype == pos) {
+    if (sp.coord == X) {
+        if (sp.stype == pos) {
             source = topo.x0;
             dest = topo.xL;
         }
-        if (stype == neg) {
+        if (sp.stype == neg) {
             source = topo.xL;
             dest = topo.x0;
         }
     }
-    if (halo.coord == Y) {
-        if (stype == pos) {
+    if (sp.coord == Y) {
+        if (sp.stype == pos) {
             source = topo.y0;
             dest = topo.yL;
         }
-        if (stype == neg) {
+        if (sp.stype == neg) {
             source = topo.yL;
             dest = topo.y0;
         }
     }
-    if (halo.coord == Z) {
-        if (stype == pos) {
+    if (sp.coord == Z) {
+        if (sp.stype == pos) {
             source = topo.z0;
             dest = topo.zL;
         }
-        if (stype == neg) {
+        if (sp.stype == neg) {
             source = topo.zL;
             dest = topo.z0;
         }
     }
-    if (halo.coord == T) {
-        if (stype == pos) {
+    if (sp.coord == T) {
+        if (sp.stype == pos) {
             source = topo.t0;
             dest = topo.tL;
         }
-        if (stype == neg) {
+        if (sp.stype == neg) {
             source = topo.tL;
             dest = topo.t0;
         }
@@ -286,18 +282,18 @@ void mpi::shift::exchange_halos(Halo &halo, mpi::MpiTopology &topo, shift_type s
 
 //Replace the values of the corresponding links of the lattice with those of halo_rec
 void mpi::shift::fill_lattice_with_halo_recv(GaugeField &field, const mpi::GeometryFrozen &geo, Halo &halo,
-    shift_type stype) {
+    const ShiftParams &sp) {
     int L = geo.L;
     int L_shift = halo.L_shift;
     //If positive shift, the local coordinates of the halo corresponds to the coordinates of the lattice
-    if (stype == pos) {
-        if (halo.coord == X) {
+    if (sp.stype == pos) {
+        if (sp.coord == X) {
             for (int t = 0; t<L; t++) {
                 for (int z = 0; z<L; z++) {
                     for (int y = 0; y<L; y++) {
                         for (int x = 0; x<L_shift; x++) {
                             size_t index_field = geo.index(x,y,z,t);
-                            size_t index_halo = halo.index_halo(x,y,z,t);
+                            size_t index_halo = halo.index_halo(x,y,z,t, sp);
                             for (int mu = 0; mu<4; mu++) {
                                 field.view_link(index_field, mu) = halo.view_halo_rec_const(index_halo, mu);
                             }
@@ -306,13 +302,13 @@ void mpi::shift::fill_lattice_with_halo_recv(GaugeField &field, const mpi::Geome
                 }
             }
         }
-        if (halo.coord == Y) {
+        if (sp.coord == Y) {
             for (int t = 0; t<L; t++) {
                 for (int z = 0; z<L; z++) {
                     for (int y = 0; y<L_shift; y++) {
                         for (int x = 0; x<L; x++) {
                             size_t index_field = geo.index(x,y,z,t);
-                            size_t index_halo = halo.index_halo(x,y,z,t);
+                            size_t index_halo = halo.index_halo(x,y,z,t, sp);
                             for (int mu = 0; mu<4; mu++) {
                                 field.view_link(index_field, mu) = halo.view_halo_rec_const(index_halo, mu);
                             }
@@ -321,13 +317,13 @@ void mpi::shift::fill_lattice_with_halo_recv(GaugeField &field, const mpi::Geome
                 }
             }
         }
-        if (halo.coord == Z) {
+        if (sp.coord == Z) {
             for (int t = 0; t<L; t++) {
                 for (int z = 0; z<L_shift; z++) {
                     for (int y = 0; y<L; y++) {
                         for (int x = 0; x<L; x++) {
                             size_t index_field = geo.index(x,y,z,t);
-                            size_t index_halo = halo.index_halo(x,y,z,t);
+                            size_t index_halo = halo.index_halo(x,y,z,t, sp);
                             for (int mu = 0; mu<4; mu++) {
                                 field.view_link(index_field, mu) = halo.view_halo_rec_const(index_halo, mu);
                             }
@@ -336,13 +332,13 @@ void mpi::shift::fill_lattice_with_halo_recv(GaugeField &field, const mpi::Geome
                 }
             }
         }
-        if (halo.coord == T) {
+        if (sp.coord == T) {
             for (int t = 0; t<L_shift; t++) {
                 for (int z = 0; z<L; z++) {
                     for (int y = 0; y<L; y++) {
                         for (int x = 0; x<L; x++) {
                             size_t index_field = geo.index(x,y,z,t);
-                            size_t index_halo = halo.index_halo(x,y,z,t);
+                            size_t index_halo = halo.index_halo(x,y,z,t, sp);
                             for (int mu = 0; mu<4; mu++) {
                                 field.view_link(index_field, mu) = halo.view_halo_rec_const(index_halo, mu);
                             }
@@ -353,14 +349,14 @@ void mpi::shift::fill_lattice_with_halo_recv(GaugeField &field, const mpi::Geome
         }
     }
     //If negative shift, the coordinates of the halo are shifted of L-L_shift to get the correct coordinates on the field
-    if (stype == neg) {
-        if (halo.coord == X) {
+    if (sp.stype == neg) {
+        if (sp.coord == X) {
             for (int t = 0; t<L; t++) {
                 for (int z = 0; z<L; z++) {
                     for (int y = 0; y<L; y++) {
                         for (int x = 0; x<L_shift; x++) {
                             size_t index_field = geo.index(x+L-L_shift,y,z,t);
-                            size_t index_halo = halo.index_halo(x,y,z,t);
+                            size_t index_halo = halo.index_halo(x,y,z,t, sp);
                             for (int mu = 0; mu<4; mu++) {
                                 field.view_link(index_field, mu) = halo.view_halo_rec_const(index_halo, mu);
                             }
@@ -370,13 +366,13 @@ void mpi::shift::fill_lattice_with_halo_recv(GaugeField &field, const mpi::Geome
             }
         }
 
-        if (halo.coord == Y) {
+        if (sp.coord == Y) {
             for (int t = 0; t<L; t++) {
                 for (int z = 0; z<L; z++) {
                     for (int y = 0; y<L_shift; y++) {
                         for (int x = 0; x<L; x++) {
                             size_t index_field = geo.index(x,y+L-L_shift,z,t);
-                            size_t index_halo = halo.index_halo(x,y,z,t);
+                            size_t index_halo = halo.index_halo(x,y,z,t, sp);
                             for (int mu = 0; mu<4; mu++) {
                                 field.view_link(index_field, mu) = halo.view_halo_rec_const(index_halo, mu);
                             }
@@ -386,13 +382,13 @@ void mpi::shift::fill_lattice_with_halo_recv(GaugeField &field, const mpi::Geome
             }
         }
 
-        if (halo.coord == Z) {
+        if (sp.coord == Z) {
             for (int t = 0; t<L; t++) {
                 for (int z = 0; z<L_shift; z++) {
                     for (int y = 0; y<L; y++) {
                         for (int x = 0; x<L; x++) {
                             size_t index_field = geo.index(x,y,z+L-L_shift,t);
-                            size_t index_halo = halo.index_halo(x,y,z,t);
+                            size_t index_halo = halo.index_halo(x,y,z,t,sp);
                             for (int mu = 0; mu<4; mu++) {
                                 field.view_link(index_field, mu) = halo.view_halo_rec_const(index_halo, mu);
                             }
@@ -402,13 +398,13 @@ void mpi::shift::fill_lattice_with_halo_recv(GaugeField &field, const mpi::Geome
             }
         }
 
-        if (halo.coord == T) {
+        if (sp.coord == T) {
             for (int t = 0; t<L_shift; t++) {
                 for (int z = 0; z<L; z++) {
                     for (int y = 0; y<L; y++) {
                         for (int x = 0; x<L; x++) {
                             size_t index_field = geo.index(x,y,z,t+L-L_shift);
-                            size_t index_halo = halo.index_halo(x,y,z,t);
+                            size_t index_halo = halo.index_halo(x,y,z,t, sp);
                             for (int mu = 0; mu<4; mu++) {
                                 field.view_link(index_field, mu) = halo.view_halo_rec_const(index_halo, mu);
                             }
@@ -422,18 +418,28 @@ void mpi::shift::fill_lattice_with_halo_recv(GaugeField &field, const mpi::Geome
 
 //Performs a shift in every node in direction coord, of type stype (positive of negative) and of length L_shift
 void mpi::shift::shift(GaugeField &field, const mpi::GeometryFrozen &geo, Halo &halo, MpiTopology &topo,
-    int L_shift, halo_coord coord_, shift_type stype) {
-    if (halo.L_shift != L_shift) {
-        std::cerr << "Wrong halo size\n";
+    const ShiftParams &sp) {
+    if (halo.L_shift < sp.L_shift) {
+        if (topo.rank == 0) std::cerr << "Wrong halo size : too small\n";
         return;
     }
+    if (sp.coord == UNSET) {
+        if (topo.rank == 0) std::cerr << "UNSET coordinate for shift in ShiftParam\n";
+        return;
+    }
+    if (sp.stype == unset) {
+        if (topo.rank == 0) std::cerr << "unset shift type for shift in ShiftParam\n";
+        return;
+    }
+    if (sp.L_shift <= 0) {
+        if (topo.rank == 0) std::cerr << "L_shift too small : " << sp.L_shift << "\n";
+    }
     MPI_Request reqs[2];
-    halo.coord = coord_;
-    fill_halo_send(field, geo, halo, stype);
-    exchange_halos(halo, topo, stype, reqs);
-    shift_field(field, geo, halo, stype);
+    fill_halo_send(field, geo, halo, sp);
+    exchange_halos(halo, topo, sp, reqs);
+    shift_field(field, geo, halo, sp);
     MPI_Waitall(2, reqs, MPI_STATUSES_IGNORE);
-    fill_lattice_with_halo_recv(field, geo, halo, stype);
+    fill_lattice_with_halo_recv(field, geo, halo, sp);
 }
 
 //Fills the send buffers of halo_obs with the corresponding faces of the gauge field
