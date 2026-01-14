@@ -29,6 +29,17 @@ void io::save_double(const std::vector<double> &data, const std::string &filenam
         return;
     }
     fs::path filepath = dir/ (filename+".txt");
+
+    int counter = 1;
+    while (fs::exists(filepath)) {
+        //new name generation if file already exists
+        std::string new_name = filename + "_" + std::to_string(counter) + ".txt";
+        filepath = dir / new_name;
+        counter++;
+    }
+
+
+
     std::ofstream file(filepath);
     if (!file.is_open()) {
         std::cout << "Could not open file " << filepath << "\n";
@@ -52,6 +63,15 @@ void io::save_double_params(const std::vector<double> &data, const RunParams &pa
     //We create the params file
     std::string param_filename = filename + "_params.txt";
     fs::path filepath = dir/param_filename;
+
+    int counter = 1;
+    while (fs::exists(filepath)) {
+        //new name generation if file already exists
+        std::string new_name = filename + "_" + std::to_string(counter) + "_params.txt";
+        filepath = dir / new_name;
+        counter++;
+    }
+
     std::ofstream file(filepath);
     if (!file.is_open()) {
         std::cout << "Could not open file " << filepath << "\n";
@@ -61,12 +81,14 @@ void io::save_double_params(const std::vector<double> &data, const RunParams &pa
     file << "L_tot: " << params.L_core*params.n_core_dims << "\n"
             << "L_core: " << params.L_core << "\n"
             << "n_core_dims: " << params.n_core_dims << "\n"
+            << "L_shift: " << params.L_shift << "\n"
+            << "n_shift: " << params.n_shift << "\n"
             << "beta: " << params.ecmc_params.beta << "\n"
             << "N_samples: " << params.ecmc_params.N_samples << "\n"
             << "param_theta_sample: " << params.ecmc_params.param_theta_sample << "\n"
             << "param_theta_refresh: " << params.ecmc_params.param_theta_refresh << "\n"
             << "poisson: " << (params.ecmc_params.poisson ? "true" : "false") << "\n"
-            << "epsilon_set: " << params.ecmc_params.epsilon_set << std::endl;
+            << "epsilon_set: " << params.ecmc_params.epsilon_set;
     file.close();
 }
 
@@ -103,6 +125,7 @@ void io::load_params(const std::string& filename, RunParams& rp) {
     if (config.count("cold_start"))  rp.cold_start = (config["cold_start"] == "true");
     if (config.count("L_shift"))     rp.L_shift = std::stoi(config["L_shift"]);
     if (config.count("n_shift"))     rp.n_shift = std::stoi(config["n_shift"]);
+    if (config.count("stype_pos"))   rp.stype_pos = (config["stype_pos"] == "true");
 
     //ECMC params
     if (config.count("beta"))                rp.ecmc_params.beta = std::stod(config["beta"]);

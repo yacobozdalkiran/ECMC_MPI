@@ -21,6 +21,7 @@ struct RunParams {
     bool cold_start = true;
     int L_shift = 2;
     int n_shift = 1; //number of shifts in all the directions
+    bool stype_pos=true; //Are the shifts positives ?
     ECMCParams ecmc_params{};
 };
 
