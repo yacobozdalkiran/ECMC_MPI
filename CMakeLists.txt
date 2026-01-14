@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 4.1)
-project(4d_MPI)
+project(ECMC_MPI)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -7,35 +7,28 @@ set(CMAKE_CXX_STANDARD 20)
 find_package(MPI REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
 
-add_executable(4d_MPI main.cpp
-        src/geometry/Geometry.cpp
-        src/geometry/Geometry.h
+add_executable(gauge_ecmc_mpi src/bin/gauge_ecmc_mpi.cpp
         src/gauge/GaugeField.cpp
-        src/gauge/GaugeField.h
         src/su3/utils.cpp
-        src/su3/utils.h
-        src/ecmc/ecmc.cpp
-        src/ecmc/ecmc.h
         src/observables/observables.cpp
-        src/observables/observables.h
         src/geometry/GeometryFrozen.cpp
-        src/geometry/GeometryFrozen.h
-        src/ecmc/ecmc_frozen.cpp
-        src/ecmc/ecmc_frozen.h
         src/mpi/MpiTopology.cpp
-        src/mpi/MpiTopology.h
         src/mpi/HalosExchange.cpp
-        src/mpi/HalosExchange.h
         src/mpi/Halo.h
         src/ecmc/ecmc_mpi.cpp
-        src/ecmc/ecmc_mpi.h)
+        include/cxxopts.hpp
+        src/io/io.cpp
+        src/io/params.cpp
+        src/io/params.h
+)
 
-target_compile_options(4d_MPI PRIVATE
+
+target_compile_options(gauge_ecmc_mpi PRIVATE
         -O3
         -ffast-math
         -march=native
         -Wall -Wextra
         -Wpedantic
-        )
+)
 
-target_link_libraries(4d_MPI PRIVATE MPI::MPI_CXX Eigen3::Eigen)
+target_link_libraries(gauge_ecmc_mpi PRIVATE MPI::MPI_CXX Eigen3::Eigen)

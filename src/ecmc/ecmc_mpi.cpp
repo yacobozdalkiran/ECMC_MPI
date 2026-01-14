@@ -254,9 +254,14 @@ size_t mpi::ecmc::random_site(const mpi::GeometryFrozen &geo, std::mt19937_64 &r
 }
 
 //Generates samples of global mean plaquette using ECMC with frozen BC
-std::vector<double> mpi::ecmc::samples_improved(GaugeField &field, const mpi::GeometryFrozen &geo, double beta,
-    int N_samples, double param_theta_sample, double param_theta_refresh, bool poisson, double epsilon_set,
+std::vector<double> mpi::ecmc::samples_improved(GaugeField &field, const mpi::GeometryFrozen &geo, const ECMCParams &params,
     std::mt19937_64 &rng, HaloObs &halo_obs, mpi::MpiTopology &topo) {
+    double beta = params.beta;
+    int N_samples = params.N_samples;
+    double param_theta_sample = params.param_theta_sample;
+    double param_theta_refresh = params.param_theta_refresh;
+    bool poisson = params.poisson;
+    double epsilon_set = params.epsilon_set;
 
     if (param_theta_sample<param_theta_refresh) {
         std::cerr << "Wrong args value, must have param_theta_sample>param_theta_refresh \n";
@@ -309,10 +314,11 @@ std::vector<double> mpi::ecmc::samples_improved(GaugeField &field, const mpi::Ge
     std::array<SU3,6> list_staple;
 
     SU3 R = random_su3(rng);
-    if (topo.rank == 0) std::cout << "Beta = " << beta << "\n";
-    //Debug
-    //size_t lifts = 0;
-    //size_t proposed = 0;
+
+
+    if (topo.rank == 0) {
+        std::cout << "Beta = " << beta << "\n";
+    }
 
     int samples = 0;
     std::array<double,2> deltas = {0.0,0.0};
@@ -345,13 +351,8 @@ std::vector<double> mpi::ecmc::samples_improved(GaugeField &field, const mpi::Ge
                 double plaq = mpi::observables::mean_plaquette_global(field, geo, halo_obs, topo);
                 if (topo.rank == 0) {
                     std::cout << "Sample " << samples << ", ";
-                    std::cout << "<P> = " << plaq << "\n"; // << static_cast<double>(lifts)/proposed * 100.0 << "% lifts " << std::endl;
+                    std::cout << "<P> = " << plaq << "\n";
                 }
-                //std::cout << "S = " << observables::wilson_action(field, geo) << std::endl;
-                //lifts = 0;
-                //proposed = 0;
-                //cout << "Q = " << topo_charge_clover(links, lat) << endl;
-                //event_counter = 0;
                 meas_plaquette.emplace_back(plaq);
                 samples++;
                 theta_parcouru_sample = 0;
@@ -394,13 +395,8 @@ std::vector<double> mpi::ecmc::samples_improved(GaugeField &field, const mpi::Ge
                 double plaq = mpi::observables::mean_plaquette_global(field, geo, halo_obs, topo);
                 if (topo.rank == 0) {
                     std::cout << "Sample " << samples << ", ";
-                    std::cout << "<P> = " << plaq << "\n"; // << static_cast<double>(lifts)/proposed * 100.0 << "% lifts " << std::endl;
+                    std::cout << "<P> = " << plaq << "\n";
                 }
-                //std::cout << "S = " << observables::wilson_action(field, geo) << std::endl;
-                //cout << "Q = " << topo_charge_clover(links, lat) << endl;
-                //lifts = 0;
-                //proposed = 0;
-                //event_counter = 0;
                 meas_plaquette.emplace_back(plaq);
                 samples++;
                 theta_parcouru_sample = 0;
