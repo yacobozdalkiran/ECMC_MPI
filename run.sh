@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=test_lat4d_mpi
+#SBATCH --job-name=test_ecmc_mpi
 #SBATCH --output=%x.o%j 
 #SBATCH --time=00:20:00 
 #SBATCH --nodes=1
