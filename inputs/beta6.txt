@@ -1,4 +1,4 @@
-L_core=12
+L_core=10
 n_core_dims=2
 cold_start=false
 L_shift=3
