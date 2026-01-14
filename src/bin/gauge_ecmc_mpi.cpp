@@ -4,7 +4,6 @@
 
 #include <iostream>
 #include <chrono>
-#include <format>
 
 #include "../ecmc/ecmc_mpi.h"
 #include "../gauge/GaugeField.h"
@@ -81,7 +80,7 @@ void generate(const RunParams &run_params) {
         }
         //Write the output
         std::string filename = "L"+std::to_string(L*n_core_dims)
-                                + "b"+std::format("{}", ecmc_params.beta)
+                                + "b"+std::to_string(ecmc_params.beta)
                                 + "Ls" + std::to_string(run_params.L_shift)
                                 + "Ns" + std::to_string(run_params.n_shift)
                                 + "dir" + std::to_string(run_params.stype_pos);
