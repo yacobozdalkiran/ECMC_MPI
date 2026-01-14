@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=test_ecmc_mpi
+#SBATCH --job-name=full_shift
 #SBATCH --output=%x.o%j 
 #SBATCH --time=00:20:00 
 #SBATCH --nodes=1
@@ -9,4 +9,4 @@
 #SBATCH --partition=cpu_short
 
 # Run MPI script
-srun build/gauge_ecmc_mpi inputs/test.txt
+srun build/gauge_ecmc_mpi inputs/beta6.txt
