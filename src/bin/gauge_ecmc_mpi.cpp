@@ -137,14 +137,13 @@ void generate_fullshift(const RunParams &run_params) {
 
     //Global shift parameters
     int n_shift = run_params.n_shift;
-    int total_shifts = n_shift*4;
 
     //ECMC params
     ECMCParams ecmc_params = run_params.ecmc_params;
     int N_samples = ecmc_params.N_samples;
 
     //Space reserved for results
-    std::vector<std::vector<double>> plaquette(total_shifts);
+    std::vector<std::vector<double>> plaquette(n_shift);
 
     //Print parameters
     if (topo.rank == 0) {
@@ -158,7 +157,7 @@ void generate_fullshift(const RunParams &run_params) {
         std::cout << "==========================================" << std::endl;
     }
 
-    for (int gshiftc = 0; gshiftc<total_shifts; gshiftc++) {
+    for (int gshiftc = 0; gshiftc<n_shift; gshiftc++) {
         if (topo.rank == 0) std::cout << "Shift " << gshiftc << " (X)...\n";
         sp.coord=X;
         mpi::shift::shift(field, geo, halo_shift, topo, sp);
@@ -177,8 +176,8 @@ void generate_fullshift(const RunParams &run_params) {
 
     if (topo.rank == 0) {
         //Flatten the plaquette vector
-        std::vector<double> plaquette_flat(total_shifts*N_samples);
-        for (int i = 0; i<total_shifts; i++) {
+        std::vector<double> plaquette_flat(n_shift*N_samples);
+        for (int i = 0; i<n_shift; i++) {
             for (int j = 0; j<N_samples; j++) {
                 plaquette_flat[i*N_samples + j] = plaquette[i][j];
             }
