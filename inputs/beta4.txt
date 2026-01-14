@@ -7,7 +7,7 @@ stype_pos=true
 
 beta=4
 N_samples=200
-param_theta_sample=12000
-param_theta_refresh=5000
+param_theta_sample=5500
+param_theta_refresh=2000
 poisson=false
 epsilon_set=0.15
