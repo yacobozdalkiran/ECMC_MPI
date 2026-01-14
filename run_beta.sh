@@ -2,7 +2,7 @@
 
 #SBATCH --job-name=beta_array
 #SBATCH --output=%x_%a_%A.o
-#SBATCH --time=00:50:00
+#SBATCH --time=02:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=16
 #SBATCH --array=1-9

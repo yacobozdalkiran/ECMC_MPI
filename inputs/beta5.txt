@@ -2,7 +2,7 @@ L_core=10
 n_core_dims=2
 cold_start=false
 L_shift=3
-n_shift=16
+n_shift=100
 stype_pos=true
 
 beta=5
