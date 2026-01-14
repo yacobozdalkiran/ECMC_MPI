@@ -4,7 +4,6 @@
 
 #include <iostream>
 #include <chrono>
-#include <oneapi/tbb/detail/_utils.h>
 
 #include "../ecmc/ecmc_mpi.h"
 #include "../gauge/GaugeField.h"
