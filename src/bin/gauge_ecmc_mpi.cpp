@@ -151,9 +151,9 @@ void generate_fullshift(const RunParams &run_params) {
         std::cout << "Total lattice size : " << L*n_core_dims  << "^4\n";
         std::cout << "Local lattice size : " << L << "^4\n";
         std::cout << "Beta : " << ecmc_params.beta << "\n";
-        std::cout << "Total number of shifts : " << n_shift*4 << "\n";
+        std::cout << "Total number of shifts : " << n_shift << "\n";
         std::cout << "Number of samples per shift : " << ecmc_params.N_samples << "\n";
-        std::cout << "Total number of samples : " << ecmc_params.N_samples*n_shift*4 << "\n";
+        std::cout << "Total number of samples : " << ecmc_params.N_samples*n_shift << "\n";
         std::cout << "==========================================" << std::endl;
     }
 
