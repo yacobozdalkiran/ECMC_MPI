@@ -1,0 +1,10 @@
+L=4
+T=4
+cold_start=false
+
+beta=6.0
+N_samples=10000
+param_theta_sample=100
+param_theta_refresh=30
+poisson=false
+epsilon_set=0.15
