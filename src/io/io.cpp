@@ -5,7 +5,6 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
-#include <mpi.h>
 #include <map>
 #include <string>
 #include <sstream>
@@ -126,6 +125,39 @@ void io::load_params(const std::string& filename, RunParams& rp) {
     if (config.count("L_shift"))     rp.L_shift = std::stoi(config["L_shift"]);
     if (config.count("n_shift"))     rp.n_shift = std::stoi(config["n_shift"]);
     if (config.count("stype_pos"))   rp.stype_pos = (config["stype_pos"] == "true");
+
+    //ECMC params
+    if (config.count("beta"))                rp.ecmc_params.beta = std::stod(config["beta"]);
+    if (config.count("N_samples"))           rp.ecmc_params.N_samples = std::stoi(config["N_samples"]);
+    if (config.count("param_theta_sample"))  rp.ecmc_params.param_theta_sample = std::stod(config["param_theta_sample"]);
+    if (config.count("param_theta_refresh")) rp.ecmc_params.param_theta_refresh = std::stod(config["param_theta_refresh"]);
+    if (config.count("poisson"))             rp.ecmc_params.poisson = (config["poisson"] == "true");
+    if (config.count("epsilon_set"))         rp.ecmc_params.epsilon_set = std::stod(config["epsilon_set"]);
+}
+
+//Loads the parameters for single core generation in filename into RunParamsSC rp
+void io::load_params_sc(const std::string &filename, RunParamsSC &rp) {
+    std::ifstream file(filename);
+    if (!file.is_open()) throw std::runtime_error("Can't open file " + filename);
+
+    std::map<std::string, std::string> config;
+    std::string line;
+
+    while (std::getline(file, line)) {
+        //Ignore comments and empty lines
+        if (line.empty() || line[0] == '#') continue;
+
+        std::istringstream is_line(line);
+        std::string key, value;
+        if (std::getline(is_line, key, '=') && std::getline(is_line, value)) {
+            config[trim(key)] = trim(value);
+        }
+    }
+
+    //Lattice params
+    if (config.count("L"))           rp.L = std::stoi(config["L"]);
+    if (config.count("T"))           rp.T = std::stoi(config["T"]);
+    if (config.count("cold_start"))  rp.cold_start = (config["cold_start"] == "true");
 
     //ECMC params
     if (config.count("beta"))                rp.ecmc_params.beta = std::stod(config["beta"]);

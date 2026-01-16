@@ -5,6 +5,7 @@
 #include "ecmc.h"
 #include <iostream>
 
+#include "../io/params.h"
 #include "../observables/observables.h"
 #include "../su3/utils.h"
 
@@ -243,9 +244,13 @@ void ecmc::update(GaugeField &field, size_t site, int mu, double theta, int epsi
     //projection_su3(links, site, mu);
 }
 
-std::vector<double> ecmc::samples_improved(GaugeField &field, const Geometry &geo, double beta,
-    int N_samples, double param_theta_sample, double param_theta_refresh, bool poisson, double epsilon_set, std::mt19937_64 &rng) {
-
+std::vector<double> ecmc::samples_improved(GaugeField &field, const Geometry &geo, const ECMCParams &params, std::mt19937_64 &rng) {
+    double beta = params.beta;
+    int N_samples = params.N_samples;
+    double param_theta_sample = params.param_theta_sample;
+    double param_theta_refresh = params.param_theta_refresh;
+    bool poisson = params.poisson;
+    double epsilon_set = params.epsilon_set;
 
 if (param_theta_sample<param_theta_refresh) {
         std::cerr << "Wrong args value, must have param_theta_sample>param_theta_refresh \n";
@@ -300,7 +305,6 @@ if (param_theta_sample<param_theta_refresh) {
     std::array<SU3,6> list_staple;
 
     SU3 R = random_su3(rng);
-    std::cout << "beta = " << beta << "\n";
 
     //Debug
     //size_t lifts = 0;
@@ -334,9 +338,9 @@ if (param_theta_sample<param_theta_refresh) {
                 //On sample
                 theta_update = theta_sample - theta_parcouru_sample;
                 update(field, site_current, mu_current, theta_update, epsilon_current, R);
-                std::cout << "Sample " << samples << ", ";
+                std::cout << "Sample " << samples << " ";
                 double plaq = observables::mean_plaquette(field, geo);
-                std::cout << "<P> = " << plaq << ",\n"; // << static_cast<double>(lifts)/proposed * 100.0 << "% lifts " << std::endl;
+                std::cout << "<P> = " << plaq << "\n"; // << static_cast<double>(lifts)/proposed * 100.0 << "% lifts " << std::endl;
                 //std::cout << "S = " << observables::wilson_action(field, geo) << std::endl;
                 //lifts = 0;
                 //proposed = 0;
@@ -381,9 +385,9 @@ if (param_theta_sample<param_theta_refresh) {
                 theta_update = theta_sample - theta_parcouru_sample;
                 update(field, site_current, mu_current, theta_update, epsilon_current, R);
                 //On sample
-                std::cout << "Sample " << samples << ", ";
+                std::cout << "Sample " << samples << " ";
                 double plaq = observables::mean_plaquette(field, geo);
-                std::cout << "<P> = " << plaq << ",\n"; // << static_cast<double>(lifts)/proposed * 100.0 << "% lifts " << std::endl;
+                std::cout << "<P> = " << plaq << "\n"; // << static_cast<double>(lifts)/proposed * 100.0 << "% lifts " << std::endl;
                 //std::cout << "S = " << observables::wilson_action(field, geo) << std::endl;
                 //cout << "Q = " << topo_charge_clover(links, lat) << endl;
                 //lifts = 0;

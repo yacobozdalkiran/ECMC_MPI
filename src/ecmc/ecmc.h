@@ -7,6 +7,7 @@
 
 #include <random>
 #include "../gauge/GaugeField.h"
+#include "../io/params.h"
 
 namespace ecmc {
     void compute_list_staples(const GaugeField &field, const Geometry &geo, size_t site, int mu, std::array<SU3,6> &list_staple);
@@ -17,9 +18,7 @@ namespace ecmc {
     std::pair<std::pair<size_t, int>,int> lift_improved(const GaugeField &field, const Geometry &geo, size_t site, int mu, int j,
         SU3 &R, const SU3 &lambda_3, const std::vector<SU3> &set, std::mt19937_64 &rng);
     void update(GaugeField &field, size_t site, int mu, double theta, int epsilon, const SU3 &R);
-    std::vector<double> samples_improved(GaugeField &field, const Geometry &geo, double beta, int N_samples,
-    double param_theta_sample, double param_theta_refresh, bool poisson, double epsilon_set, std::mt19937_64 &rng);
-
+    std::vector<double> samples_improved(GaugeField &field, const Geometry &geo, const ECMCParams &params, std::mt19937_64 &rng);
 }
 
 #endif //INC_4D_MPI_ECMCUPDATER_H

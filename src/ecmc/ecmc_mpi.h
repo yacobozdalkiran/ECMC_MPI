@@ -7,7 +7,7 @@
 
 #include <random>
 #include "../gauge/GaugeField.h"
-#include "../observables/observables.h"
+#include "../observables/observables_mpi.h"
 #include "../io/params.h"
 
 

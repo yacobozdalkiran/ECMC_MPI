@@ -25,5 +25,11 @@ struct RunParams {
     ECMCParams ecmc_params{};
 };
 
+struct RunParamsSC {
+    int L=4;
+    int T=4;
+    bool cold_start=true;
+    ECMCParams ecmc_params{};
+};
 
 #endif //ECMC_MPI_PARAMS_H
