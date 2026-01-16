@@ -76,3 +76,24 @@ double observables::wilson_action(const GaugeField &field, const Geometry &geo) 
     //action /= (lat.V*4.0);
     return action;
 }
+
+//Applies a random gauge transform to the gauge field
+void observables::gauge_transform(GaugeField &field, const Geometry &geo, std::mt19937_64 rng) {
+    GaugeField gauge_field(geo);
+    gauge_field.hot_start(rng);
+    //We will use only the mu=0 links of the gauge_transf field as the transforming gauge field
+    for (int t = 0; t<geo.T; t++) {
+        for (int z=0; z<geo.L; z++) {
+            for (int y=0; y<geo.L; y++) {
+                for (int x=0; x<geo.L; x++) {
+                    size_t site = geo.index(x,y,z,t);
+                    for (int mu=0; mu<4; mu++) {
+                        size_t npmu = geo.get_neigh(site, mu, 0);
+                        SU3 Uold = field.view_link_const(site, mu);
+                        field.view_link(site, mu) = gauge_field.view_link_const(site, 0)*Uold*gauge_field.view_link_const(npmu, 0).adjoint();
+                    }
+                }
+            }
+        }
+    }
+}

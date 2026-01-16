@@ -11,6 +11,7 @@ namespace observables {
     double mean_plaquette(const GaugeField &field, const Geometry &geo);
     double mean_plaquette(const GaugeField &field, const mpi::GeometryFrozen &geo);
     double wilson_action(const GaugeField &field, const Geometry &geo);
+    void gauge_transform(GaugeField &field, const Geometry &geo, std::mt19937_64 rng);
 }
 
 #endif //ECMC_MPI_OBSERVABLES_H

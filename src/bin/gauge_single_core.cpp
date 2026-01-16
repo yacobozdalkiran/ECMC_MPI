@@ -8,6 +8,7 @@
 #include "../ecmc/ecmc.h"
 #include "../gauge/GaugeField.h"
 #include "../io/io.h"
+#include "../observables/observables.h"
 
 //Prints the params of rp
 void print_params(const RunParamsSC &rp) {
@@ -37,6 +38,22 @@ void write_output(const std::vector<double> &meas, const RunParamsSC &rp) {
     io::save_double(meas, filename, precision);
 }
 
+//Reads the parameters of the input file into params
+void read_params(RunParamsSC &params, const std::string &input) {
+    try {
+        io::load_params_sc(input, params);
+    } catch (const std::exception& e) {
+        std::cerr << "Error reading input : " << e.what() << std::endl;
+    }
+}
+
+//Prints the elapsed time
+void print_time(long elapsed) {
+    std::cout << "==========================================" << std::endl;
+    std::cout << "Elapsed time : " << elapsed << "s\n";
+    std::cout << "==========================================" << std::endl;
+}
+
 //Generates the samples using ECMC
 void generate_sc(const RunParamsSC &rp) {
     int L = rp.L;
@@ -58,23 +75,8 @@ void generate_sc(const RunParamsSC &rp) {
     write_output(meas, rp);
 }
 
-//Reads the parameters of the input file into params
-void read_params(RunParamsSC &params, const std::string &input) {
-    try {
-        io::load_params_sc(input, params);
-    } catch (const std::exception& e) {
-        std::cerr << "Error reading input : " << e.what() << std::endl;
-    }
-}
-
-//Prints the elapsed time
-void print_time(long elapsed) {
-    std::cout << "==========================================" << std::endl;
-    std::cout << "Elapsed time : " << elapsed << "s\n";
-    std::cout << "==========================================" << std::endl;
-}
-
-int main(int argc, char* argv[]) {
+//Binary gauge_single_core to generate single core lattice gauge configurations with ECMC
+int in_main_gauge_single_core(int argc, char* argv[]) {
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <input_file.txt>" << std::endl;
         return 1;
@@ -89,4 +91,47 @@ int main(int argc, char* argv[]) {
     long elapsed = std::chrono::duration_cast<std::chrono::seconds>(end-start).count();
     print_time(elapsed);
     return 0;
+}
+
+//Checks the gauge invariance of the plaquette
+void check_plaquette(const RunParamsSC &rp) {
+    int L = rp.L;
+    int T = rp.T;
+
+    //Random
+    std::random_device rd;
+    std::mt19937_64 rng(rd());
+
+    //Initialization
+    Geometry geo(L, T);
+    GaugeField field(geo);
+    if (!rp.cold_start) field.hot_start(rng);
+
+    std::cout << "Plaquette = " << observables::mean_plaquette(field, geo) << '\n';
+    std::cout << "Gauge transform...\n";
+    observables::gauge_transform(field, geo, rng);
+    std::cout << "Plaquette = " << observables::mean_plaquette(field, geo) << '\n';
+}
+
+//Binary to check plaquette with gauge invariance
+int in_main_check_plaquette_gauge(int argc, char* argv[]) {
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <input_file.txt>" << std::endl;
+        return 1;
+    }
+
+    RunParamsSC params;
+    read_params(params, argv[1]);
+    print_params(params);
+    auto start = std::chrono::high_resolution_clock::now();
+    check_plaquette(params);
+    auto end = std::chrono::high_resolution_clock::now();
+    long elapsed = std::chrono::duration_cast<std::chrono::seconds>(end-start).count();
+    print_time(elapsed);
+    return 0;
+}
+
+int main(int argc, char* argv[]) {
+    int status = in_main_gauge_single_core(argc, argv);
+    return status;
 }
