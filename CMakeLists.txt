@@ -11,6 +11,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(MPI REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
 
+if(NOT Eigen3_FOUND)
+    message(STATUS "Eigen3 not found. Download via FetchContent...")
+
+    include(FetchContent)
+    FetchContent_Declare(
+            eigen
+            GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+            GIT_TAG 3.4.0
+    )
+    FetchContent_MakeAvailable(eigen)
+else()
+    message(STATUS "Eigen3 found on the system.")
+endif()
+
 add_executable(gauge_ecmc_mpi src/bin/gauge_ecmc_mpi.cpp
         src/gauge/GaugeField.cpp
         src/su3/utils.cpp
@@ -67,9 +81,9 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
     )
 else()
     target_compile_options(gauge_single_core PRIVATE
-            -O3
-            -ffast-math
-            -march=native
+            -O2
+            #-ffast-math
+            #-march=native
             -Wall -Wextra -Wpedantic
     )
 endif()
