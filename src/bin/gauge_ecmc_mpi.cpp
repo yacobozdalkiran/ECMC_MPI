@@ -183,11 +183,14 @@ void generate_fullshift(const RunParams &run_params) {
             }
         }
         //Write the output
+        int precision_filename = 1;
         std::string filename = "L"+std::to_string(L*n_core_dims)
-                                + "b"+std::to_string(ecmc_params.beta)
+                                + "b"+io::format_double(ecmc_params.beta, precision_filename)
                                 + "Ls" + std::to_string(run_params.L_shift)
                                 + "Ns" + std::to_string(run_params.n_shift)
-                                + "dir" + std::to_string(run_params.stype_pos);
+                                + "c" + std::to_string(run_params.cold_start)
+                                + "ts" + io::format_double(run_params.ecmc_params.param_theta_sample, precision_filename)
+                                + "tr" + io::format_double(run_params.ecmc_params.param_theta_refresh, precision_filename);
         int precision = 10;
         io::save_double_params(plaquette_flat, run_params, filename, precision);
     }

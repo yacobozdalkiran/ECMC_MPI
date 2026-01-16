@@ -6,6 +6,7 @@
 #define ECMC_MPI_IO_H
 
 #include <vector>
+#include <sstream>
 
 #include "params.h"
 
@@ -17,6 +18,13 @@ namespace io {
     //Input
     std::string trim(const std::string& s);
     void load_params(const std::string& filename, RunParams& rp);
+
+    //Utilitaries
+    inline std::string format_double(double val, int precision) {
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(precision) << val;
+        return ss.str();
+    }
 }
 
 
