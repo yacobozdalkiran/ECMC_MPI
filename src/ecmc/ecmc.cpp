@@ -238,12 +238,14 @@ std::pair<std::pair<size_t, int>, int> ecmc::lift_improved(const GaugeField &fie
     return make_pair(links_plaquette_j[index_lift], new_epsilon);
 }
 
+//Updates the gauge field with XY embedding
 void ecmc::update(GaugeField &field, size_t site, int mu, double theta, int epsilon, const SU3 &R) {
     SU3 Uold = field.view_link_const(site, mu);
     field.view_link(site, mu) = R*el_3(epsilon*theta)*R.adjoint()*Uold;
     //projection_su3(links, site, mu);
 }
 
+//Generates samples of mean plaquette with ECMC algorithm, lift improved
 std::vector<double> ecmc::samples_improved(GaugeField &field, const Geometry &geo, const ECMCParams &params, std::mt19937_64 &rng) {
     double beta = params.beta;
     int N_samples = params.N_samples;

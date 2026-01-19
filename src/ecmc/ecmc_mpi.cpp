@@ -236,6 +236,7 @@ std::pair<std::pair<size_t, int>, int> mpi::ecmc::lift_improved(const GaugeField
     return make_pair(links_plaquette_j[index_lift], new_epsilon);
 }
 
+//Updates the gauge field with XY embedding
 void mpi::ecmc::update(GaugeField &field, size_t site, int mu, double theta, int epsilon, const SU3 &R) {
     SU3 Uold = field.view_link_const(site, mu);
     field.view_link(site, mu) = R*el_3(epsilon*theta)*R.adjoint()*Uold;

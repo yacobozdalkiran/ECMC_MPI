@@ -13,6 +13,7 @@
 #include "../mpi/HalosExchange.h"
 #include "../mpi/MpiTopology.h"
 
+//Generates samples of gauge confs with 1d shifts
 void generate(const RunParams &run_params) {
     int L = run_params.L_core;
     int n_core_dims = run_params.n_core_dims;
@@ -106,6 +107,7 @@ void generate(const RunParams &run_params) {
     }
 }
 
+//Generates samples of gauge confs with 4d shifts
 void generate_fullshift(const RunParams &run_params) {
     int L = run_params.L_core;
     int n_core_dims = run_params.n_core_dims;
@@ -196,6 +198,7 @@ void generate_fullshift(const RunParams &run_params) {
     }
 }
 
+//Reads the parameters of input file into RunParams struct
 void read_params(RunParams &params, int rank, const std::string &input) {
     if (rank == 0) {
         try {
@@ -209,6 +212,7 @@ void read_params(RunParams &params, int rank, const std::string &input) {
     MPI_Bcast(&params, sizeof(RunParams), MPI_BYTE, 0, MPI_COMM_WORLD);
 }
 
+//Main function
 int main(int argc, char* argv[]) {
     //Initialization and check args
     MPI_Init(&argc,&argv);

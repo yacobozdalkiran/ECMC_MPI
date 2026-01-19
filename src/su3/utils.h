@@ -12,8 +12,8 @@
 using SU3 = Eigen::Matrix3cd;
 using Complex = std::complex<double>;
 
+//Generates an exp(i xi lambda_3)
 inline SU3 el_3(double xi) {
-    /*Generates a exp(i xi lambda_3)*/
     SU3 result;
     double cxi = cos(xi);
     double sxi = sin(xi);

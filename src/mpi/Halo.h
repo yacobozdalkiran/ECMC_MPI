@@ -126,7 +126,7 @@ public:
     int L;
     int V;
 
-    HaloObs(const mpi::GeometryFrozen &geo) {
+    explicit HaloObs(const mpi::GeometryFrozen &geo) {
         L = geo.L;
         V = L*L*L;
         fx0_recv.resize(L*L*L*9*4);
