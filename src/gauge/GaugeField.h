@@ -55,6 +55,7 @@ public:
     }
 
     void projection_su3(size_t site, int mu);
+    void project_field_su3();
 };
 
 #endif //INC_4D_MPI_GAUGEFIELD_H

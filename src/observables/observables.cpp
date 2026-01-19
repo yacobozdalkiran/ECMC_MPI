@@ -97,3 +97,15 @@ void observables::gauge_transform(GaugeField &field, const Geometry &geo, std::m
         }
     }
 }
+
+//Maximal drift from unitarity in field
+double observables::max_drift_det(const GaugeField &field, const Geometry &geo) {
+    double res = 0.0;
+    for (size_t site = 0; site<geo.V; site++) {
+        for (int mu=0; mu<4; mu++) {
+            double drift = std::abs(field.view_link_const(site, mu).determinant()-1.0);
+            if (drift>res) res=drift;
+        }
+    }
+    return res;
+}

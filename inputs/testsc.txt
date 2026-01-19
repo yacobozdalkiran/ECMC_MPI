@@ -3,8 +3,8 @@ T=4
 cold_start=false
 
 beta=6.0
-N_samples=10000
-param_theta_sample=100
-param_theta_refresh=30
+N_samples=20000
+param_theta_sample=400
+param_theta_refresh=150
 poisson=false
 epsilon_set=0.15

@@ -306,15 +306,15 @@ if (param_theta_sample<param_theta_refresh) {
 
     SU3 R = random_su3(rng);
 
-    //Debug
-    //size_t lifts = 0;
-    //size_t proposed = 0;
 
     int samples = 0;
     std::array<double,2> deltas = {0.0,0.0};
-    //size_t event_counter = 0;
+    size_t event_counter = 0;
     std::vector<double> meas_plaquette;
     while (samples < N_samples) {
+        // if (samples%50==0) {
+        //     field.project_field_su3();
+        // }
         if (lift_counter%N_set ==0) {
             ecmc_set(epsilon_set, set, rng);
         }
@@ -340,12 +340,14 @@ if (param_theta_sample<param_theta_refresh) {
                 update(field, site_current, mu_current, theta_update, epsilon_current, R);
                 std::cout << "Sample " << samples << " ";
                 double plaq = observables::mean_plaquette(field, geo);
-                std::cout << "<P> = " << plaq << "\n"; // << static_cast<double>(lifts)/proposed * 100.0 << "% lifts " << std::endl;
+                std::cout << "<P> = " << plaq << " "; // << static_cast<double>(lifts)/proposed * 100.0 << "% lifts " << std::endl;
+                std::cout << "Events : " << event_counter << " ";
+                std::cout << "\n";
                 //std::cout << "S = " << observables::wilson_action(field, geo) << std::endl;
                 //lifts = 0;
                 //proposed = 0;
                 //cout << "Q = " << topo_charge_clover(links, lat) << endl;
-                //event_counter = 0;
+                event_counter = 0;
                 meas_plaquette.emplace_back(plaq);
                 samples++;
                 theta_parcouru_sample = 0;
@@ -358,7 +360,7 @@ if (param_theta_sample<param_theta_refresh) {
                 theta_parcouru_refresh = 0;
                 if (poisson) theta_refresh = random_theta_refresh(rng); //On retire un nouveau theta refresh
                 //On refresh
-                //event_counter++;
+                event_counter++;
                 site_current = random_site(rng);
                 mu_current = random_dir(rng);
                 epsilon_current = 2* random_eps(rng) -1;
@@ -372,7 +374,7 @@ if (param_theta_sample<param_theta_refresh) {
                 theta_parcouru_refresh = 0;
                 if (poisson) theta_refresh = random_theta_refresh(rng); //On retire un nouveau theta_refresh
                 //On refresh
-                //event_counter++;
+                event_counter++;
                 site_current = random_site(rng);
                 mu_current = random_dir(rng);
                 epsilon_current = 2* random_eps(rng) -1;
@@ -387,12 +389,14 @@ if (param_theta_sample<param_theta_refresh) {
                 //On sample
                 std::cout << "Sample " << samples << " ";
                 double plaq = observables::mean_plaquette(field, geo);
-                std::cout << "<P> = " << plaq << "\n"; // << static_cast<double>(lifts)/proposed * 100.0 << "% lifts " << std::endl;
+                std::cout << "<P> = " << plaq << " "; // << static_cast<double>(lifts)/proposed * 100.0 << "% lifts " << std::endl;
+                std::cout << "Events : " << event_counter << " ";
+                std::cout << "\n";
                 //std::cout << "S = " << observables::wilson_action(field, geo) << std::endl;
                 //cout << "Q = " << topo_charge_clover(links, lat) << endl;
                 //lifts = 0;
                 //proposed = 0;
-                //event_counter = 0;
+                event_counter = 0;
                 meas_plaquette.emplace_back(plaq);
                 samples++;
                 theta_parcouru_sample = 0;
@@ -404,7 +408,7 @@ if (param_theta_sample<param_theta_refresh) {
                 theta_parcouru_sample += theta_update;
                 theta_parcouru_refresh += theta_update;
                 //On lifte
-                //event_counter++;
+                event_counter++;
                 auto l = lift_improved(field, geo, site_current, mu_current, j, R, lambda_3, set,rng);
                 lift_counter++;
                 site_current = l.first.first;
@@ -419,7 +423,7 @@ if (param_theta_sample<param_theta_refresh) {
                 theta_parcouru_refresh = 0;
                 if (poisson) theta_refresh = random_theta_refresh(rng); //On retire un nouveau theta_refresh
                 //On refresh
-                //event_counter++;
+                event_counter++;
                 site_current = random_site(rng);
                 mu_current = random_dir(rng);
                 epsilon_current = 2* random_eps(rng) -1;
@@ -433,7 +437,7 @@ if (param_theta_sample<param_theta_refresh) {
             theta_parcouru_sample += theta_update;
             theta_parcouru_refresh += theta_update;
             //On lift
-            //event_counter++;
+            event_counter++;
             auto l = lift_improved(field, geo, site_current, mu_current, j, R, lambda_3, set,rng);
             lift_counter++;
             site_current = l.first.first;

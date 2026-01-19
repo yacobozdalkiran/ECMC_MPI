@@ -68,8 +68,12 @@ void generate_sc(const RunParamsSC &rp) {
     GaugeField field(geo);
     if (!rp.cold_start) field.hot_start(rng);
 
+    std::cout << "Max drift from unitarity : " << observables::max_drift_det(field, geo) << "\n";
     //ECMC
     std::vector<double> meas = ecmc::samples_improved(field, geo, rp.ecmc_params, rng);
+
+    //Check SU3
+    std::cout << "Max drift from unitarity : " << observables::max_drift_det(field, geo) << "\n";
 
     //Output
     write_output(meas, rp);

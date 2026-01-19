@@ -81,9 +81,9 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
     )
 else()
     target_compile_options(gauge_single_core PRIVATE
-            -O2
-            #-ffast-math
-            #-march=native
+            -O3
+            -ffast-math
+            -march=native
             -Wall -Wextra -Wpedantic
     )
 endif()

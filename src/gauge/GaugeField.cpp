@@ -25,25 +25,36 @@ void GaugeField::cold_start() {
 }
 
 //Projects a link on SU3 using Gramm-Schmidt
-void GaugeField::projection_su3(size_t site, int mu){
-    SU3 U = view_link(site, mu);
-    Eigen::Vector3cd c0 = U.col(0);
-    Eigen::Vector3cd c1 = U.col(1);
-    Eigen::Vector3cd c2 = U.col(2);
+void GaugeField::projection_su3(size_t site, int mu) {
+    auto U = view_link(site, mu);
 
+    SU3 temp = U;
+
+    Eigen::Vector3cd c0 = temp.col(0);
     c0.normalize();
-    c1 -= c0 * (c0.adjoint() * c1)(0,0);
+
+    Eigen::Vector3cd c1 = temp.col(1);
+    c1 -= c0 * c0.dot(c1);
     c1.normalize();
-    c2 -= c0 * (c0.adjoint() * c2)(0,0);
-    c2 -= c1 * (c1.adjoint() * c2)(0,0);
-    c2.normalize();
 
-    U.col(0) = c0;
-    U.col(1) = c1;
-    U.col(2) = c2;
+    Eigen::Vector3cd c2;
+    c2(0) = std::conj(c0(1)*c1(2) - c0(2)*c1(1));
+    c2(1) = std::conj(c0(2)*c1(0) - c0(0)*c1(2));
+    c2(2) = std::conj(c0(0)*c1(1) - c0(1)*c1(0));
 
-    // Fix determinant to 1
-    Complex det = U.determinant();
-    U /= exp(Complex(0.0, arg(det) / 3.0));
+    temp.col(0) = c0;
+    temp.col(1) = c1;
+    temp.col(2) = c2;
+
+    U = temp;
+}
+
+//Projects the whole field on SU3
+void GaugeField::project_field_su3() {
+    for (size_t site=0; site<V; site++) {
+        for (int mu=0; mu<4; mu++) {
+            projection_su3(site, mu);
+        }
+    }
 }
 
