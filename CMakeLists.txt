@@ -43,16 +43,16 @@ add_executable(gauge_ecmc_mpi src/bin/gauge_ecmc_mpi.cpp
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
     # Options spécifiques à icpx (OneAPI)
     target_compile_options(gauge_ecmc_mpi PRIVATE
-            -O3
-            -xHost            # Remplace -march=native pour Intel
-            -fp-model fast    # Équivalent plus robuste de -ffast-math
+            -O2
+            #-xHost            # Remplace -march=native pour Intel
+            -fp-model precise
             -Wall -Wextra
     )
 else()
     target_compile_options(gauge_ecmc_mpi PRIVATE
-            -O3
-            -ffast-math
-            -march=native
+            -O2
+            #-ffast-math
+            #-march=native
             -Wall -Wextra -Wpedantic
     )
 endif()
