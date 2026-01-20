@@ -160,16 +160,16 @@ void generate_fullshift(const RunParams &run_params) {
     }
 
     for (int gshiftc = 0; gshiftc<n_shift; gshiftc++) {
-        if (topo.rank == 0) std::cout << "Shift " << gshiftc << " (X)...\n";
+        if (topo.rank == 0) std::cout << "Shift " << gshiftc << " (X)";
         sp.coord=X;
         mpi::shift::shift(field, geo, halo_shift, topo, sp);
-        if (topo.rank == 0) std::cout << "Shift " << gshiftc << " (Y)...\n";
+        if (topo.rank == 0) std::cout << "(Y)";
         sp.coord=Y;
         mpi::shift::shift(field, geo, halo_shift, topo, sp);
-        if (topo.rank == 0) std::cout << "Shift " << gshiftc << " (Z)...\n";
+        if (topo.rank == 0) std::cout << "(Z)";
         sp.coord=Z;
         mpi::shift::shift(field, geo, halo_shift, topo, sp);
-        if (topo.rank == 0) std::cout << "Shift " << gshiftc << " (T)...\n";
+        if (topo.rank == 0) std::cout <<  "(T)\n";
         sp.coord=T;
         mpi::shift::shift(field, geo, halo_shift, topo, sp);
 
