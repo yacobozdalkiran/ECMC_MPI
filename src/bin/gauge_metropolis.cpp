@@ -18,6 +18,7 @@ void print_params(const RunParamsMetro &rp) {
     std::cout << "Number of sweeps per sample : " << rp.mp.N_sweeps_meas << "\n";
     std::cout << "Number of hits per sweep : " << rp.mp.N_hits << "\n";
     std::cout << "Epsilon : " << rp.mp.epsilon << "\n";
+    std::cout << "Seed : " << rp.seed << "\n";
     std::cout << "==========================================" << std::endl;
 }
 

@@ -1,6 +1,7 @@
 L=4
 T=4
 cold_start=false
+seed = 12345
 
 beta=6.0
 N_samples=30000

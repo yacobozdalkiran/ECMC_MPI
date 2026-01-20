@@ -21,6 +21,7 @@ void print_params(const RunParamsSC &rp) {
     std::cout << "Theta refresh : " << rp.ecmc_params.param_theta_refresh << "\n";
     std::cout << "Loi de poisson : " << (rp.ecmc_params.poisson ? "Yes" : "No") << "\n";
     std::cout << "Epsilon set : " << rp.ecmc_params.epsilon_set << "\n";
+    std::cout << "Seed : " << rp.seed << "\n";
     std::cout << "==========================================" << std::endl;
 }
 
