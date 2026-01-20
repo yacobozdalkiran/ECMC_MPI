@@ -158,6 +158,8 @@ void io::load_params_sc(const std::string &filename, RunParamsSC &rp) {
     if (config.count("L"))           rp.L = std::stoi(config["L"]);
     if (config.count("T"))           rp.T = std::stoi(config["T"]);
     if (config.count("cold_start"))  rp.cold_start = (config["cold_start"] == "true");
+    if (config.count("seed"))  rp.seed = std::stoi(config["seed"]);
+
 
     //ECMC params
     if (config.count("beta"))                rp.ecmc_params.beta = std::stod(config["beta"]);
@@ -191,6 +193,7 @@ void io::load_params_metro(const std::string &filename, RunParamsMetro &rp) {
     if (config.count("L"))           rp.L = std::stoi(config["L"]);
     if (config.count("T"))           rp.T = std::stoi(config["T"]);
     if (config.count("cold_start"))  rp.cold_start = (config["cold_start"] == "true");
+    if (config.count("seed"))  rp.seed = std::stoi(config["seed"]);
 
     //Metropolis params
     if (config.count("beta"))                rp.mp.beta = std::stod(config["beta"]);

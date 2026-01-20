@@ -39,6 +39,7 @@ struct RunParamsSC {
     int L=4;
     int T=4;
     bool cold_start=true;
+    int seed = 123;
     ECMCParams ecmc_params{};
 };
 
@@ -46,6 +47,7 @@ struct RunParamsMetro {
     int L = 4;
     int T = 4;
     bool cold_start=true;
+    int seed = 123;
     MetroParams mp{};
 };
 

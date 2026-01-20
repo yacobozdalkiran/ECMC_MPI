@@ -103,8 +103,8 @@ void check_plaquette(const RunParamsSC &rp) {
     int T = rp.T;
 
     //Random
-    std::random_device rd;
-    std::mt19937_64 rng(rd());
+    //std::random_device rd;
+    std::mt19937_64 rng(rp.seed);
 
     //Initialization
     Geometry geo(L, T);

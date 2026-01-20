@@ -73,16 +73,16 @@ target_link_libraries(gauge_single_core PRIVATE Eigen3::Eigen)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
     target_compile_options(gauge_single_core PRIVATE
-            -O3
-            -xHost            # Remplace -march=native pour Intel
-            -fp-model fast    # Équivalent plus robuste de -ffast-math
+            -O2
+            #-xHost
+            -fp-model precise
             -Wall -Wextra
     )
 else()
     target_compile_options(gauge_single_core PRIVATE
-            -O3
-            -ffast-math
-            -march=native
+            -O2
+            #-ffast-math
+            #-march=native
             -Wall -Wextra -Wpedantic
     )
 endif()
@@ -101,16 +101,16 @@ target_link_libraries(gauge_metropolis PRIVATE Eigen3::Eigen)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
     target_compile_options(gauge_metropolis PRIVATE
-            -O3
-            -xHost            # Remplace -march=native pour Intel
-            -fp-model fast    # Équivalent plus robuste de -ffast-math
+            -O2
+            #-xHost
+            -fp-model precise
             -Wall -Wextra
     )
 else()
     target_compile_options(gauge_metropolis PRIVATE
-            -O3
-            -ffast-math
-            -march=native
+            -O2
+            #-ffast-math
+            #-march=native
             -Wall -Wextra -Wpedantic
     )
 endif()
