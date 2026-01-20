@@ -117,7 +117,7 @@ void generate_fullshift(const RunParams &run_params) {
 
     //Rng
     //std::random_device rd;
-    std::mt19937_64 rng(run_params.seed);
+    std::mt19937_64 rng(run_params.seed+topo.rank);
 
     //Create the geometry and the field (cold)
     mpi::GeometryFrozen geo(L);
