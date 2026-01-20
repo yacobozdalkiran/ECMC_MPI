@@ -1,11 +1,11 @@
-L=4
-T=4
+L=7
+T=7
 cold_start=false
 seed = 12345
 
 beta=6.0
-N_samples=30000
-param_theta_sample=350
-param_theta_refresh=150
+N_samples=1000
+param_theta_sample=3150
+param_theta_refresh=1150
 poisson=false
 epsilon_set=0.15
