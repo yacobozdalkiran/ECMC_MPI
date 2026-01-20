@@ -1,11 +1,11 @@
 L = 4
 T = 4
-cold_start = false
+cold_start = true
 seed = 12345
 
 beta = 6.0
 epsilon = 0.15
-N_samples = 3
+N_samples = 30000
 N_sweeps_meas = 1
 N_hits = 1
 N_burnin = 0

@@ -82,6 +82,7 @@ void io::save_double_params(const std::vector<double> &data, const RunParams &pa
             << "n_core_dims: " << params.n_core_dims << "\n"
             << "L_shift: " << params.L_shift << "\n"
             << "n_shift: " << params.n_shift << "\n"
+            << "Seed: " << params.seed << "\n"
             << "beta: " << params.ecmc_params.beta << "\n"
             << "N_samples: " << params.ecmc_params.N_samples << "\n"
             << "param_theta_sample: " << params.ecmc_params.param_theta_sample << "\n"
@@ -125,6 +126,7 @@ void io::load_params(const std::string& filename, RunParams& rp) {
     if (config.count("L_shift"))     rp.L_shift = std::stoi(config["L_shift"]);
     if (config.count("n_shift"))     rp.n_shift = std::stoi(config["n_shift"]);
     if (config.count("stype_pos"))   rp.stype_pos = (config["stype_pos"] == "true");
+    if (config.count("seed"))      rp.seed= std::stoi(config["seed"]);
 
     //ECMC params
     if (config.count("beta"))                rp.ecmc_params.beta = std::stod(config["beta"]);

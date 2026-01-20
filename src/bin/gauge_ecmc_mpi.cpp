@@ -116,8 +116,8 @@ void generate_fullshift(const RunParams &run_params) {
     mpi::MpiTopology topo(n_core_dims);
 
     //Rng
-    std::random_device rd;
-    std::mt19937_64 rng(rd());
+    //std::random_device rd;
+    std::mt19937_64 rng(run_params.seed);
 
     //Create the geometry and the field (cold)
     mpi::GeometryFrozen geo(L);
@@ -156,6 +156,7 @@ void generate_fullshift(const RunParams &run_params) {
         std::cout << "Total number of shifts : " << n_shift << "\n";
         std::cout << "Number of samples per shift : " << ecmc_params.N_samples << "\n";
         std::cout << "Total number of samples : " << ecmc_params.N_samples*n_shift << "\n";
+        std::cout << "Seed : " << run_params.seed << "\n";
         std::cout << "==========================================" << std::endl;
     }
 

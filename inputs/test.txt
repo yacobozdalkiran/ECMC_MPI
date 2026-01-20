@@ -1,13 +1,14 @@
-L_core=10
+L_core=6
 n_core_dims=2
 cold_start=false
 L_shift=3
 n_shift=4
 stype_pos=true
+seed=12345
 
-beta=5.1
+beta=6.0
 N_samples=3
-param_theta_sample=100
+param_theta_sample=
 param_theta_refresh=40
 poisson=false
 epsilon_set=0.10

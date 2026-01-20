@@ -32,6 +32,7 @@ struct RunParams {
     int L_shift = 2;
     int n_shift = 1; //number of shifts in all the directions
     bool stype_pos=true; //Are the shifts positives ?
+    int seed = 123;
     ECMCParams ecmc_params{};
 };
 
