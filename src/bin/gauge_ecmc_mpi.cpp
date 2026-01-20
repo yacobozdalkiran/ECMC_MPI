@@ -160,7 +160,7 @@ void generate_fullshift(const RunParams &run_params) {
         std::cout << "Seed : " << run_params.seed << "\n";
         std::cout << "==========================================" << std::endl;
         int g = std::gcd(run_params.L_core, run_params.L_shift);
-        if (L<=8 || L<=4*g) std::cout << "/!\\ WARNING : Not ergodic ! Change L_core or L_shift /!\\ \n";
+        if (not((g==1 and L>8) or (g>=1 and L>4*g))) std::cout << "/!\\ WARNING : Not ergodic ! Change L_core or L_shift /!\\ \n";
     }
 
     for (int gshiftc = 0; gshiftc<n_shift; gshiftc++) {
