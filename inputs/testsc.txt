@@ -7,5 +7,5 @@ beta=6.0
 N_samples=30000
 param_theta_sample=350
 param_theta_refresh=150
-poisson=true
+poisson=false
 epsilon_set=0.15
