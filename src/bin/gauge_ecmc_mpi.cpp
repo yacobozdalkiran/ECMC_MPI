@@ -154,10 +154,13 @@ void generate_fullshift(const RunParams &run_params) {
         std::cout << "Local lattice size : " << L << "^4\n";
         std::cout << "Beta : " << ecmc_params.beta << "\n";
         std::cout << "Total number of shifts : " << n_shift << "\n";
+        std::cout << "Offset of shifts : " << run_params.L_shift << "\n";
         std::cout << "Number of samples per shift : " << ecmc_params.N_samples << "\n";
         std::cout << "Total number of samples : " << ecmc_params.N_samples*n_shift << "\n";
         std::cout << "Seed : " << run_params.seed << "\n";
         std::cout << "==========================================" << std::endl;
+        int g = std::gcd(run_params.L_core, run_params.L_shift);
+        if (L<=8 || L<=4*g) std::cout << "/!\\ WARNING : Not ergodic ! Change L_core or L_shift /!\\ \n";
     }
 
     for (int gshiftc = 0; gshiftc<n_shift; gshiftc++) {
