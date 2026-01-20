@@ -15,6 +15,16 @@ struct ECMCParams {
     double epsilon_set = 0.15;
 };
 
+struct MetroParams {
+    double beta = 6.0;
+    double epsilon = 0.15;
+    int N_set = 50; //Number of sweeps between set change
+    int N_samples = 10; //Number of measures (samples)
+    int N_sweeps_meas = 1; //Number of sweeps between measures
+    int N_hits = 1;
+    int N_burnin = 0;
+};
+
 struct RunParams {
     int L_core = 6;
     int n_core_dims = 2;
@@ -30,6 +40,13 @@ struct RunParamsSC {
     int T=4;
     bool cold_start=true;
     ECMCParams ecmc_params{};
+};
+
+struct RunParamsMetro {
+    int L = 4;
+    int T = 4;
+    bool cold_start=true;
+    MetroParams mp{};
 };
 
 #endif //ECMC_MPI_PARAMS_H

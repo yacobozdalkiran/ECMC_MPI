@@ -5,7 +5,6 @@
 #include "ecmc.h"
 #include <iostream>
 
-#include "../io/params.h"
 #include "../observables/observables.h"
 #include "../su3/utils.h"
 

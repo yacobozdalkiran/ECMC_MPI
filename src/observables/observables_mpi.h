@@ -9,9 +9,6 @@
 #include "../mpi/Halo.h"
 #include "../mpi/MpiTopology.h"
 
-
-
-
 namespace mpi::observables {
     double sum_plaquette_bulk(const GaugeField &field, const mpi::GeometryFrozen &geo);
     double sum_plaquette_boundaries(const GaugeField &field, const mpi::GeometryFrozen &geo, const HaloObs &halo_obs);

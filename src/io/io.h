@@ -20,6 +20,7 @@ namespace io {
     std::string trim(const std::string& s);
     void load_params(const std::string& filename, RunParams& rp);
     void load_params_sc(const std::string &filename, RunParamsSC& rp);
+    void load_params_metro(const std::string &filename, RunParamsMetro& rp);
 
     //Utilitaries
     inline std::string format_double(double val, int precision) {

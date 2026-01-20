@@ -81,6 +81,17 @@ SU3 random_SU3_epsilon(double epsilon, std::mt19937_64 &rng) {
     return M;
 }
 
+//Creates a symmetric set of SU3 matrices close to identity
+std::vector<SU3> metropolis_set(double epsilon, int size, std::mt19937_64 &rng) {
+        std::vector<SU3> set(size+1);
+        set[0] = SU3::Identity();
+        for (int i = 1; i < size+1; i+=2) {
+            set[i] = random_SU3_epsilon(epsilon, rng);
+            set[i+1] = set[i].adjoint();
+        }
+        return set;
+}
+
 //Creates a set of SU3 matrices close to identity
 std::vector<SU3> ecmc_set(double epsilon, std::vector<SU3> &set, std::mt19937_64 &rng) {
     size_t size = set.size()-1;

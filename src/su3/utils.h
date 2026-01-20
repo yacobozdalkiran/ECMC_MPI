@@ -25,6 +25,7 @@ inline SU3 el_3(double xi) {
 SU3 random_su3(std::mt19937_64 &rng);
 SU3 su2_quaternion_to_su3(const std::array<double,4> &su2, int i, int j);
 SU3 random_SU3_epsilon(double epsilon, std::mt19937_64 &rng);
+std::vector<SU3> metropolis_set(double epsilon, int size, std::mt19937_64 &rng);
 std::vector<SU3> ecmc_set(double epsilon, std::vector<SU3> &set, std::mt19937_64 &rng);
 //Returns the sign of the double x
 inline int dsign(double x) {

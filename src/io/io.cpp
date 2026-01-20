@@ -167,3 +167,37 @@ void io::load_params_sc(const std::string &filename, RunParamsSC &rp) {
     if (config.count("poisson"))             rp.ecmc_params.poisson = (config["poisson"] == "true");
     if (config.count("epsilon_set"))         rp.ecmc_params.epsilon_set = std::stod(config["epsilon_set"]);
 }
+
+//Loads the parameters for Metropolis generations from input file
+void io::load_params_metro(const std::string &filename, RunParamsMetro &rp) {
+    std::ifstream file(filename);
+    if (!file.is_open()) throw std::runtime_error("Can't open file " + filename);
+
+    std::map<std::string, std::string> config;
+    std::string line;
+
+    while (std::getline(file, line)) {
+        //Ignore comments and empty lines
+        if (line.empty() || line[0] == '#') continue;
+
+        std::istringstream is_line(line);
+        std::string key, value;
+        if (std::getline(is_line, key, '=') && std::getline(is_line, value)) {
+            config[trim(key)] = trim(value);
+        }
+    }
+
+    //Lattice params
+    if (config.count("L"))           rp.L = std::stoi(config["L"]);
+    if (config.count("T"))           rp.T = std::stoi(config["T"]);
+    if (config.count("cold_start"))  rp.cold_start = (config["cold_start"] == "true");
+
+    //Metropolis params
+    if (config.count("beta"))                rp.mp.beta = std::stod(config["beta"]);
+    if (config.count("epsilon"))         rp.mp.epsilon= std::stod(config["epsilon"]);
+    if (config.count("N_samples"))           rp.mp.N_samples = std::stoi(config["N_samples"]);
+    if (config.count("N_sweeps_meas"))           rp.mp.N_sweeps_meas = std::stoi(config["N_sweeps_meas"]);
+    if (config.count("N_hits"))           rp.mp.N_hits = std::stoi(config["N_hits"]);
+    if (config.count("N_burnin"))           rp.mp.N_burnin= std::stoi(config["N_burnin"]);
+    if (config.count("N_set"))           rp.mp.N_set= std::stoi(config["N_set"]);
+}
