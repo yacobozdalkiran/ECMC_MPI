@@ -25,6 +25,13 @@ struct MetroParams {
     int N_burnin = 0;
 };
 
+struct HbParams {
+    double beta = 6.0;
+    int N_samples = 10;
+    int N_hits = 1;
+    int N_sweeps = 1;
+};
+
 struct RunParams {
     int L_core = 6;
     int n_core_dims = 2;
@@ -50,6 +57,14 @@ struct RunParamsMetro {
     bool cold_start=true;
     int seed = 123;
     MetroParams mp{};
+};
+
+struct RunParamsHb {
+    int L=4;
+    int T=4;
+    bool cold_start=true;
+    int seed = 123;
+    HbParams hp{};
 };
 
 #endif //ECMC_MPI_PARAMS_H

@@ -206,3 +206,34 @@ void io::load_params_metro(const std::string &filename, RunParamsMetro &rp) {
     if (config.count("N_burnin"))           rp.mp.N_burnin= std::stoi(config["N_burnin"]);
     if (config.count("N_set"))           rp.mp.N_set= std::stoi(config["N_set"]);
 }
+
+void io::load_params_hb(const std::string &filename, RunParamsHb &rp) {
+    std::ifstream file(filename);
+    if (!file.is_open()) throw std::runtime_error("Can't open file " + filename);
+
+    std::map<std::string, std::string> config;
+    std::string line;
+
+    while (std::getline(file, line)) {
+        //Ignore comments and empty lines
+        if (line.empty() || line[0] == '#') continue;
+
+        std::istringstream is_line(line);
+        std::string key, value;
+        if (std::getline(is_line, key, '=') && std::getline(is_line, value)) {
+            config[trim(key)] = trim(value);
+        }
+    }
+
+    //Lattice params
+    if (config.count("L"))           rp.L = std::stoi(config["L"]);
+    if (config.count("T"))           rp.T = std::stoi(config["T"]);
+    if (config.count("cold_start"))  rp.cold_start = (config["cold_start"] == "true");
+    if (config.count("seed"))  rp.seed = std::stoi(config["seed"]);
+
+    //Metropolis params
+    if (config.count("beta"))                rp.hp.beta = std::stod(config["beta"]);
+    if (config.count("N_samples"))           rp.hp.N_samples = std::stoi(config["N_samples"]);
+    if (config.count("N_sweeps"))           rp.hp.N_sweeps = std::stoi(config["N_sweeps"]);
+    if (config.count("N_hits"))           rp.hp.N_hits = std::stoi(config["N_hits"]);
+}

@@ -26,23 +26,53 @@ SU3 random_su3(std::mt19937_64 &rng) {
 }
 
 //Embbeds a SU2 matrix into a SU3 matrix according to subgroup (i,j)
-SU3 su2_quaternion_to_su3(const std::array<double,4> &su2, int i, int j){
+SU3 su2_quaternion_to_su3(const SU2q &su2, int i, int j){
     if (i==j) std::cerr<<"i = j wrong embedding\n";
     SU3 X;
     int k = 3-i-j;
     X.setZero();
     X(k,k) = Complex(1.0,0.0);
-    X(i,i) = Complex(su2[0],su2[3]);
-    X(j,j) = Complex(su2[0],-su2[3]);
-    X(i,j) = Complex(su2[2],su2[1]);
-    X(j,i) = Complex(-su2[2],su2[1]);
+    X(i,i) = Complex(su2(0),su2(3));
+    X(j,j) = Complex(su2(0),-su2(3));
+    X(i,j) = Complex(su2(2),su2(1));
+    X(j,i) = Complex(-su2(2),su2(1));
     return X;
+}
+
+//Returns the quat. representation of SU2 matrix
+SU2q su2_to_quaternion(const SU2 &su2) {
+    return {
+        (su2(0,0)+su2(1,1)).real()/2.0,
+        (su2(0,1)+su2(1,0)).imag()/2.0,
+        (su2(0,1)-su2(1,0)).real()/2.0,
+        (su2(0,0)-su2(1,1)).imag()/2.0
+    };
+}
+
+//Multiplication of 2 SU2q
+SU2q mult(const SU2q &q, const SU2q &p) {
+    return {
+        q(0)*p(0) - q(1)*p(1) - q(2)*p(2) - q(3)*p(3), // r0
+        q(0)*p(1) + q(1)*p(0) + q(2)*p(3) - q(3)*p(2), // r1 (i)
+        q(0)*p(2) - q(1)*p(3) + q(2)*p(0) + q(3)*p(1), // r2 (j)
+        q(0)*p(3) + q(1)*p(2) - q(2)*p(1) + q(3)*p(0)  // r3 (k)
+    };
+}
+
+//Returns the adjoint
+SU2q adj(const SU2q &q) {
+    return {
+        q(0),
+        -q(1),
+        -q(2),
+        -q(3)
+    };
 }
 
 //Returns a random SU3 matrix epsilon close to identity
 SU3 random_SU3_epsilon(double epsilon, std::mt19937_64 &rng) {
     std::uniform_real_distribution<double> unif(-0.5,0.5);
-    std::array<double,4> x = {0.0, 0.0, 0.0, 0.0};
+    SU2q x = {0.0, 0.0, 0.0, 0.0};
     SU3 M = SU3::Identity();
 
     //double r0 = unif(rng);
@@ -50,10 +80,10 @@ SU3 random_SU3_epsilon(double epsilon, std::mt19937_64 &rng) {
     double r2 = unif(rng);
     double r3 = unif(rng);
     double norm = sqrt(r1*r1 + r2*r2 + r3*r3);
-    x[0] = sqrt(1-epsilon*epsilon);
-    x[1] = epsilon * r1 / norm;
-    x[2] = epsilon * r2 / norm;
-    x[3] = epsilon * r3 / norm;
+    x(0) = sqrt(1-epsilon*epsilon);
+    x(1) = epsilon * r1 / norm;
+    x(2) = epsilon * r2 / norm;
+    x(3) = epsilon * r3 / norm;
     M *= su2_quaternion_to_su3(x, 0,1);
 
     //r0 = unif(rng);
@@ -61,10 +91,10 @@ SU3 random_SU3_epsilon(double epsilon, std::mt19937_64 &rng) {
     r2 = unif(rng);
     r3 = unif(rng);
     norm = sqrt(r1*r1 + r2*r2 + r3*r3);
-    x[0] = sqrt(1-epsilon*epsilon);
-    x[1] = epsilon * r1 / norm;
-    x[2] = epsilon * r2 / norm;
-    x[3] = epsilon * r3 / norm;
+    x(0) = sqrt(1-epsilon*epsilon);
+    x(1) = epsilon * r1 / norm;
+    x(2) = epsilon * r2 / norm;
+    x(3) = epsilon * r3 / norm;
     M *= su2_quaternion_to_su3(x, 0,2);
 
     //r0 = unif(rng);
@@ -72,10 +102,10 @@ SU3 random_SU3_epsilon(double epsilon, std::mt19937_64 &rng) {
     r2 = unif(rng);
     r3 = unif(rng);
     norm = sqrt(r1*r1 + r2*r2 + r3*r3);
-    x[0] = sqrt(1-epsilon*epsilon);
-    x[1] = epsilon * r1 / norm;
-    x[2] = epsilon * r2 / norm;
-    x[3] = epsilon * r3 / norm;
+    x(0) = sqrt(1-epsilon*epsilon);
+    x(1) = epsilon * r1 / norm;
+    x(2) = epsilon * r2 / norm;
+    x(3) = epsilon * r3 / norm;
     M *= su2_quaternion_to_su3(x, 1,2);
 
     return M;

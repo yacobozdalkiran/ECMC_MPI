@@ -11,6 +11,8 @@
 
 using SU3 = Eigen::Matrix3cd;
 using Complex = std::complex<double>;
+using SU2q = Eigen::Vector4d;
+using SU2 = Eigen::Matrix2cd;
 
 //Generates an exp(i xi lambda_3)
 inline SU3 el_3(double xi) {
@@ -23,7 +25,10 @@ inline SU3 el_3(double xi) {
     return result;
 }
 SU3 random_su3(std::mt19937_64 &rng);
-SU3 su2_quaternion_to_su3(const std::array<double,4> &su2, int i, int j);
+SU3 su2_quaternion_to_su3(const SU2q &su2, int i, int j);
+SU2q su2_to_quaternion(const SU2 &su2);
+SU2q mult(const SU2q &q, const SU2q &p);
+SU2q adj(const SU2q &q);
 SU3 random_SU3_epsilon(double epsilon, std::mt19937_64 &rng);
 std::vector<SU3> metropolis_set(double epsilon, int size, std::mt19937_64 &rng);
 std::vector<SU3> ecmc_set(double epsilon, std::vector<SU3> &set, std::mt19937_64 &rng);

@@ -21,6 +21,7 @@ namespace io {
     void load_params(const std::string& filename, RunParams& rp);
     void load_params_sc(const std::string &filename, RunParamsSC& rp);
     void load_params_metro(const std::string &filename, RunParamsMetro& rp);
+    void load_params_hb(const std::string &filename, RunParamsHb& rp);
 
     //Utilitaries
     inline std::string format_double(double val, int precision) {
@@ -28,6 +29,15 @@ namespace io {
         ss << std::fixed << std::setprecision(precision) << val;
         return ss.str();
     }
+}
+
+//Printing
+
+//Prints the elapsed time
+inline void print_time(long elapsed) {
+    std::cout << "==========================================" << std::endl;
+    std::cout << "Elapsed time : " << elapsed << "s\n";
+    std::cout << "==========================================" << std::endl;
 }
 
 
