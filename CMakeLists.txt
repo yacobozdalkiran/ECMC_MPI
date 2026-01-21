@@ -114,6 +114,7 @@ else()
             -Wall -Wextra -Wpedantic
     )
 endif()
+
 add_executable(gauge_heatbath
         src/bin/gauge_heatbath.cpp
         src/heatbath/heatbath.cpp
@@ -128,17 +129,17 @@ add_executable(gauge_heatbath
 target_link_libraries(gauge_heatbath PRIVATE Eigen3::Eigen)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-target_compile_options(gauge_heatbath PRIVATE
--O2
-#-xHost
--fp-model precise
--Wall -Wextra
+    target_compile_options(gauge_heatbath PRIVATE
+            -O2
+            #-xHost
+            -fp-model precise
+            -Wall -Wextra
 )
 else()
-target_compile_options(gauge_heatbath PRIVATE
--O2
-#-ffast-math
-#-march=native
--Wall -Wextra -Wpedantic
+    target_compile_options(gauge_heatbath PRIVATE
+            -O2
+            #-ffast-math
+            #-march=native
+            -Wall -Wextra -Wpedantic
 )
 endif()
