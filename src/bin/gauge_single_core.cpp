@@ -28,7 +28,7 @@ void print_params(const RunParamsSC &rp) {
 //Write the output
 void write_output(const std::vector<double> &meas, const RunParamsSC &rp) {
     int precision_filename = 1;
-    std::string filename = "L"+std::to_string(rp.L)
+    std::string filename = "E_L"+std::to_string(rp.L)
                             + "T"+std::to_string(rp.T)
                             + "b"+io::format_double(rp.ecmc_params.beta, precision_filename)
                             + "c" + std::to_string(rp.cold_start)
@@ -46,13 +46,6 @@ void read_params(RunParamsSC &params, const std::string &input) {
     } catch (const std::exception& e) {
         std::cerr << "Error reading input : " << e.what() << std::endl;
     }
-}
-
-//Prints the elapsed time
-void print_time(long elapsed) {
-    std::cout << "==========================================" << std::endl;
-    std::cout << "Elapsed time : " << elapsed << "s\n";
-    std::cout << "==========================================" << std::endl;
 }
 
 //Generates the samples using ECMC
