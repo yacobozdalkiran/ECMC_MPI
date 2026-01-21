@@ -253,9 +253,9 @@ std::vector<double> ecmc::samples_improved(GaugeField &field, const Geometry &ge
     bool poisson = params.poisson;
     double epsilon_set = params.epsilon_set;
 
-if (param_theta_sample<param_theta_refresh) {
-        std::cerr << "Wrong args value, must have param_theta_sample>param_theta_refresh \n";
-    }
+// if (param_theta_sample<param_theta_refresh) {
+//         std::cerr << "Wrong args value, must have param_theta_sample>param_theta_refresh \n";
+//     }
     size_t V = geo.V;
     //Set de matrices pour refresh R
     int N_set = 100;

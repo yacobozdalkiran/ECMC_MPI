@@ -264,9 +264,9 @@ std::vector<double> mpi::ecmc::samples_improved(GaugeField &field, const mpi::Ge
     bool poisson = params.poisson;
     double epsilon_set = params.epsilon_set;
 
-    if (param_theta_sample<param_theta_refresh) {
-        std::cerr << "Wrong args value, must have param_theta_sample>param_theta_refresh \n";
-    }
+    // if (param_theta_sample<param_theta_refresh) {
+    //     std::cerr << "Wrong args value, must have param_theta_sample>param_theta_refresh \n";
+    // }
     //Set de matrices pour refresh R
     int N_set = 100;
     size_t lift_counter=0;

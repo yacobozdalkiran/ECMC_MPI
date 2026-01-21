@@ -258,9 +258,9 @@ std::vector<double> ecmc_frozen::samples_improved(GaugeField &field, const mpi::
         int N_samples, double param_theta_sample, double param_theta_refresh, bool poisson, double epsilon_set,
         std::mt19937_64 &rng) {
 
-    if (param_theta_sample<param_theta_refresh) {
-        std::cerr << "Wrong args value, must have param_theta_sample>param_theta_refresh \n";
-    }
+    // if (param_theta_sample<param_theta_refresh) {
+    //     std::cerr << "Wrong args value, must have param_theta_sample>param_theta_refresh \n";
+    // }
     //Set de matrices pour refresh R
     int N_set = 100;
     size_t lift_counter=0;
