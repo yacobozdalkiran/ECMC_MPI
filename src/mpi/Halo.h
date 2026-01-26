@@ -72,10 +72,6 @@ public:
         t0.resize(L*L*L*4*9);
     }
 
-    //Returns the index of the site corresponding to (c1,c2,c3) with order x,y,z,t
-    [[nodiscard]] size_t index_halo_ecmc(int c1, int c2, int c3) const {
-        return (c3*L + c2)*L+c1;
-    }
     //Non const mapping of the halos to SU3 matrices
     [[nodiscard]] Eigen::Map<SU3> view_link(face f, size_t site, int mu) {
         if (f==fx0) return Eigen::Map<SU3>(&x0[site*4+mu]);

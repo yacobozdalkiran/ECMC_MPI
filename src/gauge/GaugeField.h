@@ -10,7 +10,7 @@
 #include <complex>
 #include <random>
 #include "../geometry/Geometry.h"
-#include "../geometry/GeometryFrozen.h"
+#include "../geometry/GeometryHaloECMC.h"
 
 using Complex = std::complex<double>;
 using SU3 = Eigen::Matrix3cd;
@@ -19,12 +19,13 @@ class GaugeField {
     int L;
     int T;
     size_t V;
+    size_t V_halo;
     std::vector<Complex> links;
 
 public:
 
     //Initialises a cold gauge conf
-    explicit GaugeField(const Geometry &geo):L(geo.L), T(geo.T), V(L*L*L*T), links(V*4*9, Complex(0.0,0.0)) {
+    explicit GaugeField(const Geometry &geo):L(geo.L), T(geo.T), V(L*L*L*T), V_halo(0), links(V*4*9, Complex(0.0,0.0)) {
         for (size_t site = 0; site < V; site++) {
             for (int mu = 0; mu<4; mu++) {
                 view_link(site, mu) = SU3::Identity();
@@ -33,7 +34,7 @@ public:
     }
 
     //Initializes a squared cold gauge conf
-    explicit GaugeField(const mpi::GeometryFrozen &geo):L(geo.L), T(geo.L), V(L*L*L*L), links(V*4*9, Complex(0.0,0.0)) {
+    explicit GaugeField(const GeometryHaloECMC &geo):L(geo.L), T(geo.L), V(geo.V), V_halo(geo.V_halo), links((V+4*V_halo)*4*9, Complex(0.0,0.0)) {
         for (size_t site = 0; site < V; site++) {
             for (int mu = 0; mu<4; mu++) {
                 view_link(site, mu) = SU3::Identity();
