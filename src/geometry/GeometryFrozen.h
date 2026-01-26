@@ -8,7 +8,7 @@
 #include <vector>
 
 namespace mpi {
-    //Geometry of a square lattice with frozen BC, index halo functions
+    //Geometry of a square lattice with frozen BC
     class GeometryFrozen {
     public:
         int L;
