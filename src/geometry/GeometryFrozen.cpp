@@ -67,7 +67,7 @@ mpi::GeometryFrozen::GeometryFrozen(int L_) {
                 for (int x = 0; x < L; x++) {
                     size_t site = index(x, y, z, t); //x
                     for (int mu = 0; mu < 4; mu++) {
-                        if (x==0||x==L-1||y==0||y==L-1||z==0||z==L-1||t==0||t==L-1) {
+                        if ((x==0 && mu != 0) ||(y==0 && mu != 1)||(z==0 && mu != 2)||(t==0 && mu != 3)) {
                             is_frozen_flat[index_frozen(site, mu)] = true;
                         }
                     }
