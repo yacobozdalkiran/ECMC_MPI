@@ -6,6 +6,7 @@
 #define INC_4D_MPI_HALO_H
 
 #include "../gauge/GaugeField.h"
+#include "../geometry/GeometryHaloECMC.h"
 #include <iostream>
 
 //Direction of the shift
@@ -104,49 +105,45 @@ public:
     }
 
     //To get a link taking into account HaloECMC
-    Eigen::Map<SU3> get_link_with_halo(GaugeField &field, const mpi::GeometryFrozen &geo, int x, int y, int z, int t, int mu) {
-        size_t site{};
-        if (x==L) {
-            site = index_halo_ecmc(y,z,t);
+    Eigen::Map<SU3> get_link_with_halo(GaugeField &field, const mpi::GeometryFrozen &geo, size_t site, loc l, int mu) {
+        if (l == loc::xL) {
             return view_link(fxL, site, mu);
         }
-        if (y==L) {
-            site = index_halo_ecmc(x,z,t);
+        if (l ==loc::yL) {
             return view_link(fyL, site, mu);
         }
-        if (z==L) {
-            site = index_halo_ecmc(x,y,t);
+        if (l==loc::zL) {
             return view_link(fzL, site, mu);
         }
-        if (t==L) {
-            site = index_halo_ecmc(x,y,z);
+        if (l == loc::tL) {
             return view_link(ftL, site, mu);
         }
-        site = geo.index(x,y,z,t);
-        return field.view_link(site, mu);
+        if (l == loc::field) {
+            return field.view_link(site, mu);
+        }
+        std::cerr << "Wrong access\n";
+        return Eigen::Map<SU3>(nullptr);
     }
 
     //To get a const link taking into account HaloECMC
-    Eigen::Map<const SU3> get_link_with_halo_const(GaugeField &field, const mpi::GeometryFrozen &geo, int x, int y, int z, int t, int mu) const {
-        size_t site{};
-        if (x==L) {
-            site = index_halo_ecmc(y,z,t);
+    Eigen::Map<const SU3> get_link_with_halo_const(GaugeField &field, const mpi::GeometryFrozen &geo, size_t site, loc l, int mu) const {
+        if (l == loc::xL) {
             return view_link_const(fxL, site, mu);
         }
-        if (y==L) {
-            site = index_halo_ecmc(x,z,t);
+        if (l ==loc::yL) {
             return view_link_const(fyL, site, mu);
         }
-        if (z==L) {
-            site = index_halo_ecmc(x,y,t);
+        if (l==loc::zL) {
             return view_link_const(fzL, site, mu);
         }
-        if (t==L) {
-            site = index_halo_ecmc(x,y,z);
+        if (l==loc::tL) {
             return view_link_const(ftL, site, mu);
         }
-        site = geo.index(x,y,z,t);
-        return field.view_link_const(site, mu);
+        if (l==loc::field) {
+            return field.view_link_const(site, mu);
+        }
+        std::cerr << "Wrong access\n";
+        return Eigen::Map<const SU3>(nullptr);
     }
 };
 
@@ -277,7 +274,7 @@ public:
             if (f == ft0) return Eigen::Map<SU3>(&ft0_recv[(site * 4 + mu) * 9]);
             if (f == ftL) return Eigen::Map<SU3>(&ftL_recv[(site * 4 + mu) * 9]);
         }
-        std::cerr << "Wrong acces\n";
+        std::cerr << "Wrong access\n";
         return Eigen::Map<SU3>(nullptr);
     }
 
@@ -303,7 +300,7 @@ public:
             if (f == ft0) return Eigen::Map<SU3 const>(&ft0_recv[(site * 4 + mu) * 9]);
             if (f == ftL) return Eigen::Map<SU3 const>(&ftL_recv[(site * 4 + mu) * 9]);
         }
-        std::cerr << "Wrong acces\n";
+        std::cerr << "Wrong access\n";
         return Eigen::Map<const SU3>(nullptr);
     }
 

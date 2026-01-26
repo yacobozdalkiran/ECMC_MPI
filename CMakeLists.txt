@@ -36,6 +36,8 @@ add_executable(gauge_ecmc_mpi src/bin/gauge_ecmc_mpi.cpp
         src/ecmc/ecmc_mpi.cpp
         src/io/io.cpp
         src/io/params.h
+        src/geometry/GeometryHaloECMC.cpp
+        src/geometry/GeometryHaloECMC.h
 )
 
 
