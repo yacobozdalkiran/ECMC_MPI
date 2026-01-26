@@ -24,5 +24,9 @@ namespace mpi::observables {
     void exchange_halos_obs(HaloObs &halo_obs, mpi::MpiTopology &topo, MPI_Request* reqs);
 }
 
+namespace mpi::ecmc {
+    void fill_halos_ecmc(const GaugeField &field, const mpi::GeometryFrozen &geo, HaloECMC &halo);
+    void exchange_halos_ecmc(const mpi::GeometryFrozen &geo, HaloECMC &halo, mpi::MpiTopology &topo);
+}
 
 #endif //INC_4D_MPI_HALOSEXCHANGE_H

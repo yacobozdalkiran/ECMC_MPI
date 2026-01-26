@@ -494,3 +494,43 @@ void mpi::observables::exchange_halos_obs(HaloObs &halo_obs, mpi::MpiTopology &t
     MPI_Isend(halo_obs.ft0_send.data(), halo_obs.V*4*18, MPI_DOUBLE, topo.t0, 7, topo.cart_comm, &reqs[15]);
     //The Wait_all is after the computation of the observable on the bulk of the lattice to optimize data flux
 }
+
+//Fills the halos with links of coord 0
+void mpi::ecmc::fill_halos_ecmc(const GaugeField &field, const mpi::GeometryFrozen &geo, HaloECMC &halo) {
+    for (int c1 = 0; c1<geo.L; c1++) {
+        for (int c2 = 0; c2<geo.L; c2++) {
+            for (int c3 = 0; c3<geo.L; c3++) {
+                size_t fieldx0 = geo.index(0,c1,c2,c3);
+                size_t fieldy0 = geo.index(c1,0,c2,c3);
+                size_t fieldz0 = geo.index(c1,c2,0,c3);
+                size_t fieldt0 = geo.index(c1,c2,c3,0);
+                size_t site_halo = halo.index_halo_ecmc(c1,c2,c3);
+                for (int mu=0; mu<4; mu++) {
+                    halo.view_link(fx0, site_halo, mu) = field.view_link_const(fieldx0, mu);
+                    halo.view_link(fy0, site_halo, mu) = field.view_link_const(fieldy0, mu);
+                    halo.view_link(fz0, site_halo, mu) = field.view_link_const(fieldz0, mu);
+                    halo.view_link(ft0, site_halo, mu) = field.view_link_const(fieldt0, mu);
+                }
+            }
+        }
+    }
+}
+
+//Exchange the halos for ECMC
+void mpi::ecmc::exchange_halos_ecmc(const mpi::GeometryFrozen &geo, HaloECMC &halo, mpi::MpiTopology &topo) {
+    MPI_Request reqs[8];
+    int L = geo.L;
+    //Setting up the recv
+    MPI_Irecv(halo.xL.data(), L*4*18, MPI_DOUBLE, topo.xL, 0, topo.cart_comm, &reqs[0]);
+    MPI_Irecv(halo.yL.data(), L*4*18, MPI_DOUBLE, topo.yL, 1, topo.cart_comm, &reqs[1]);
+    MPI_Irecv(halo.zL.data(), L*4*18, MPI_DOUBLE, topo.zL, 2, topo.cart_comm, &reqs[2]);
+    MPI_Irecv(halo.tL.data(), L*4*18, MPI_DOUBLE, topo.tL, 3, topo.cart_comm, &reqs[3]);
+    //Setting up the sends
+    MPI_Isend(halo.x0.data(), L*4*18, MPI_DOUBLE, topo.x0, 0, topo.cart_comm, &reqs[4]);
+    MPI_Isend(halo.y0.data(), L*4*18, MPI_DOUBLE, topo.y0, 1, topo.cart_comm, &reqs[5]);
+    MPI_Isend(halo.z0.data(), L*4*18, MPI_DOUBLE, topo.z0, 2, topo.cart_comm, &reqs[6]);
+    MPI_Isend(halo.t0.data(), L*4*18, MPI_DOUBLE, topo.t0, 3, topo.cart_comm, &reqs[7]);
+    //Waiting for sync
+    MPI_Waitall(8, reqs, MPI_STATUSES_IGNORE);
+}
+
