@@ -190,8 +190,8 @@ void generate_fullshift(const RunParams &run_params) {
         }
         //Write the output
         int precision_filename = 1;
-        std::string filename = "EM_L"+std::to_string(L*n_core_dims)
-                                + "b"+io::format_double(ecmc_params.beta, precision_filename)
+        std::string filename = "EM_L" + std::to_string(L*n_core_dims)
+                                + "b" + io::format_double(ecmc_params.beta, precision_filename)
                                 + "Ls" + std::to_string(run_params.L_shift)
                                 + "Ns" + std::to_string(run_params.n_shift)
                                 + "c" + std::to_string(run_params.cold_start)
