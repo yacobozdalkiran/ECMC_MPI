@@ -8,8 +8,6 @@
 #include "../gauge/GaugeField.h"
 #include <iostream>
 
-#include "../io/params.h"
-
 //Direction of the shift
 enum shift_type {
     unset,
@@ -26,7 +24,7 @@ enum halo_coord {
     T
 };
 
-//Used to access the different buffers of HaloObs
+//Used to access the different buffers of HaloObs and HaloECMC
 enum face {
     fx0, fxL,
     fy0, fyL,
@@ -47,6 +45,110 @@ struct ShiftParams {
     int L_shift=0;
 };
 
+//Halos used during ECMC with MPI to get the plaquette on the boundaries
+class HaloECMC {
+public:
+    int L;
+    std::vector<Complex> xL; //Halo containing the x=0 links of (x+1) node
+    std::vector<Complex> yL; //Halo containing the y=0 links of (y+1) node
+    std::vector<Complex> zL; //Halo containing the z=0 links of (z+1) node
+    std::vector<Complex> tL; //Halo containing the t=0 links of (t+1) node
+    std::vector<Complex> x0; //Halo containing the x=0 links of current node
+    std::vector<Complex> y0; //Halo containing the y=0 links of current node
+    std::vector<Complex> z0; //Halo containing the z=0 links of current node
+    std::vector<Complex> t0; //Halo containing the t=0 links of current node
+
+
+    explicit HaloECMC(const mpi::GeometryFrozen& geo) {
+        L = geo.L;
+        xL.resize(L*L*L*4*9);
+        yL.resize(L*L*L*4*9);
+        zL.resize(L*L*L*4*9);
+        tL.resize(L*L*L*4*9);
+        x0.resize(L*L*L*4*9);
+        y0.resize(L*L*L*4*9);
+        z0.resize(L*L*L*4*9);
+        t0.resize(L*L*L*4*9);
+    }
+
+    //Returns the index of the site corresponding to (c1,c2,c3) with order x,y,z,t
+    [[nodiscard]] size_t index_halo_ecmc(int c1, int c2, int c3) const {
+        return (c3*L + c2)*L+c1;
+    }
+    //Non const mapping of the halos to SU3 matrices
+    [[nodiscard]] Eigen::Map<SU3> view_link(face f, size_t site, int mu) {
+        if (f==fx0) return Eigen::Map<SU3>(&x0[site*4+mu]);
+        if (f==fy0) return Eigen::Map<SU3>(&y0[site*4+mu]);
+        if (f==fz0) return Eigen::Map<SU3>(&z0[site*4+mu]);
+        if (f==ft0) return Eigen::Map<SU3>(&t0[site*4+mu]);
+        if (f==fxL) return Eigen::Map<SU3>(&xL[site*4+mu]);
+        if (f==fyL) return Eigen::Map<SU3>(&yL[site*4+mu]);
+        if (f==fzL) return Eigen::Map<SU3>(&zL[site*4+mu]);
+        if (f==ftL) return Eigen::Map<SU3>(&tL[site*4+mu]);
+        std::cerr << "Wrong acces\n";
+        return Eigen::Map<SU3>(nullptr);
+    }
+
+    //Const mapping of the halos to SU3 matrices
+    [[nodiscard]] Eigen::Map<const SU3> view_link_const(face f, size_t site, int mu) const {
+        if (f==fx0) return Eigen::Map<const SU3>(&x0[site*4+mu]);
+        if (f==fy0) return Eigen::Map<const SU3>(&y0[site*4+mu]);
+        if (f==fz0) return Eigen::Map<const SU3>(&z0[site*4+mu]);
+        if (f==ft0) return Eigen::Map<const SU3>(&t0[site*4+mu]);
+        if (f==fxL) return Eigen::Map<const SU3>(&xL[site*4+mu]);
+        if (f==fyL) return Eigen::Map<const SU3>(&yL[site*4+mu]);
+        if (f==fzL) return Eigen::Map<const SU3>(&zL[site*4+mu]);
+        if (f==ftL) return Eigen::Map<const SU3>(&tL[site*4+mu]);
+        std::cerr << "Wrong acces\n";
+        return Eigen::Map<const SU3>(nullptr);
+    }
+
+    //To get a link taking into account HaloECMC
+    Eigen::Map<SU3> get_link_with_halo(GaugeField &field, const mpi::GeometryFrozen &geo, int x, int y, int z, int t, int mu) {
+        size_t site{};
+        if (x==L) {
+            site = index_halo_ecmc(y,z,t);
+            return view_link(fxL, site, mu);
+        }
+        if (y==L) {
+            site = index_halo_ecmc(x,z,t);
+            return view_link(fyL, site, mu);
+        }
+        if (z==L) {
+            site = index_halo_ecmc(x,y,t);
+            return view_link(fzL, site, mu);
+        }
+        if (t==L) {
+            site = index_halo_ecmc(x,y,z);
+            return view_link(ftL, site, mu);
+        }
+        site = geo.index(x,y,z,t);
+        return field.view_link(site, mu);
+    }
+
+    //To get a const link taking into account HaloECMC
+    Eigen::Map<const SU3> get_link_with_halo_const(GaugeField &field, const mpi::GeometryFrozen &geo, int x, int y, int z, int t, int mu) const {
+        size_t site{};
+        if (x==L) {
+            site = index_halo_ecmc(y,z,t);
+            return view_link_const(fxL, site, mu);
+        }
+        if (y==L) {
+            site = index_halo_ecmc(x,z,t);
+            return view_link_const(fyL, site, mu);
+        }
+        if (z==L) {
+            site = index_halo_ecmc(x,y,t);
+            return view_link_const(fzL, site, mu);
+        }
+        if (t==L) {
+            site = index_halo_ecmc(x,y,z);
+            return view_link_const(ftL, site, mu);
+        }
+        site = geo.index(x,y,z,t);
+        return field.view_link_const(site, mu);
+    }
+};
 
 //Halos used to shift the gauge configurations between all nodes
 class Halo {
@@ -176,7 +278,7 @@ public:
             if (f == ftL) return Eigen::Map<SU3>(&ftL_recv[(site * 4 + mu) * 9]);
         }
         std::cerr << "Wrong acces\n";
-        return Eigen::Map<SU3>(NULL);
+        return Eigen::Map<SU3>(nullptr);
     }
 
     //Const mapping of the halos of HaloObs instance to SU3 matrices
@@ -202,7 +304,7 @@ public:
             if (f == ftL) return Eigen::Map<SU3 const>(&ftL_recv[(site * 4 + mu) * 9]);
         }
         std::cerr << "Wrong acces\n";
-        return Eigen::Map<const SU3>(NULL);
+        return Eigen::Map<const SU3>(nullptr);
     }
 
     //Returns the link at (x,y,z,t,mu) taking into account the halos_obs
