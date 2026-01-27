@@ -9,7 +9,7 @@
 #include <complex>
 #include <random>
 
-using SU3 = Eigen::Matrix3cd;
+using SU3 = Eigen::Matrix<std::complex<double>, 3, 3, Eigen::RowMajor>;
 using Complex = std::complex<double>;
 using SU2q = Eigen::Vector4d;
 using SU2 = Eigen::Matrix2cd;

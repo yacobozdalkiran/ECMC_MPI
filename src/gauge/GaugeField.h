@@ -13,7 +13,7 @@
 #include "../geometry/GeometryHaloECMC.h"
 
 using Complex = std::complex<double>;
-using SU3 = Eigen::Matrix3cd;
+using SU3 = Eigen::Matrix<std::complex<double>, 3, 3, Eigen::RowMajor>;
 
 class GaugeField {
     int L;
