@@ -1,4 +1,4 @@
-L_core=9
+L_core=5
 n_core_dims=2
 cold_start=false
 L_shift=4
@@ -8,7 +8,7 @@ seed=12345
 
 beta=6.0
 N_samples=300
-param_theta_sample=3150
-param_theta_refresh=1150
-poisson=true
+param_theta_sample=900
+param_theta_refresh=2000
+poisson=false
 epsilon_set=0.15
