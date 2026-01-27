@@ -81,3 +81,52 @@ double observables::max_drift_det(const GaugeField &field, const Geometry &geo) 
     }
     return res;
 }
+
+//Computes G_{\mu\nu}(site) clover
+SU3 observables::clover_site(const GaugeField &field, const Geometry &geo, size_t site, int mu, int nu) {
+    if (mu==nu) std::cerr << "mu = nu => G(site, mu, nu) = 0\n";
+    size_t x = site;
+    size_t xpmu = geo.get_neigh(x,mu,0); //x+mu
+    size_t xpnu = geo.get_neigh(x,nu,0); //x+nu
+    size_t xmmu = geo.get_neigh(x,mu,1); //x-mu
+    size_t xmnu = geo.get_neigh(x,nu,1); //x-nu
+    size_t xmmupnu = geo.get_neigh(xmmu,nu,0); //x-mu+nu
+    size_t xmmumnu = geo.get_neigh(xmmu,nu,1); //x-mu-nu
+    size_t xpmumnu = geo.get_neigh(xpmu,nu,1); //x+mu-nu
+    SU3 clover = SU3::Zero();
+    clover += field.view_link_const(x, mu) * field.view_link_const(xpmu, nu) * field.view_link_const(xpnu, mu).adjoint() * field.view_link_const(x, nu).adjoint();
+    clover += field.view_link_const(x, nu) * field.view_link_const(xmmupnu, mu).adjoint() * field.view_link_const(xmmu,nu).adjoint() * field.view_link_const(xmmu,mu).adjoint();
+    clover += field.view_link_const(xmmu, mu).adjoint() * field.view_link_const(xmmumnu, nu).adjoint() * field.view_link_const(xmmumnu, mu) * field.view_link_const(xmnu, nu);
+    clover += field.view_link_const(xmnu, nu).adjoint() * field.view_link_const(xmnu, mu) * field.view_link_const(xpmumnu, nu) * field.view_link_const(x, mu).adjoint();
+    clover = 0.25 * clover.imag();
+    return clover;
+}
+
+//Computes the local clover topological charge at site
+double observables::local_topo_charge_clover(const GaugeField &field, const Geometry &geo, size_t site) {
+    double q_clover = 0.0;
+    for (int mu = 0; mu < 4; mu++) {
+        for (int nu = 0; nu < 4; nu++) {
+            for (int rho =0; rho < 4; rho++) {
+                for (int sigma = 0; sigma < 4; sigma++) {
+                    if (levi_civita(mu,nu,rho,sigma) != 0) {
+                        double tr = (clover_site(field, geo, site, mu, nu) * clover_site(field, geo, site, rho, sigma)).trace().real();
+                        q_clover += levi_civita(mu, nu, rho, sigma) * tr;
+                    }
+                }
+            }
+        }
+    }
+    q_clover *= 1.0/(32 * M_PI * M_PI);
+    return q_clover;
+}
+
+//Return the clover topological charge
+double observables::topo_charge_clover(const GaugeField &field, const Geometry &geo) {
+    double q = 0.0;
+    for (size_t site = 0; site < geo.V; site++) {
+        q += local_topo_charge_clover(field, geo, site);
+    }
+    return q;
+}
+
