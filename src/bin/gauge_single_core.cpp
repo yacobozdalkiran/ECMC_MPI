@@ -71,6 +71,7 @@ void generate_sc(const RunParamsSC &rp) {
 
     //Output
     write_output(meas, rp);
+    io::ildg::save_ildg(field, geo, "conf");
 }
 
 //Binary gauge_single_core to generate single core lattice gauge configurations with ECMC

@@ -11,10 +11,19 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(MPI REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
 
+include(FetchContent)
+FetchContent_Declare(
+        lime
+        GIT_REPOSITORY https://github.com/usqcd-software/c-lime.git
+        GIT_TAG        master  # Ou un tag spécifique comme v1.3.2
+)
+
+# Rend les cibles de C-LIME disponibles
+FetchContent_MakeAvailable(lime)
+
 if(NOT Eigen3_FOUND)
     message(STATUS "Eigen3 not found. Download via FetchContent...")
 
-    include(FetchContent)
     FetchContent_Declare(
             eigen
             GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
@@ -59,7 +68,7 @@ else()
     )
 endif()
 
-target_link_libraries(gauge_ecmc_mpi PRIVATE MPI::MPI_CXX Eigen3::Eigen)
+target_link_libraries(gauge_ecmc_mpi PRIVATE MPI::MPI_CXX Eigen3::Eigen lime)
 
 add_executable(gauge_single_core src/bin/gauge_single_core.cpp
         src/gauge/GaugeField.cpp
@@ -71,7 +80,7 @@ add_executable(gauge_single_core src/bin/gauge_single_core.cpp
         src/io/params.h
 )
 
-target_link_libraries(gauge_single_core PRIVATE Eigen3::Eigen)
+target_link_libraries(gauge_single_core PRIVATE Eigen3::Eigen lime)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
     target_compile_options(gauge_single_core PRIVATE
@@ -99,7 +108,7 @@ add_executable(gauge_metropolis src/bin/gauge_metropolis.cpp
         src/io/params.h
 )
 
-target_link_libraries(gauge_metropolis PRIVATE Eigen3::Eigen)
+target_link_libraries(gauge_metropolis PRIVATE Eigen3::Eigen lime)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
     target_compile_options(gauge_metropolis PRIVATE
@@ -128,7 +137,7 @@ add_executable(gauge_heatbath
         src/io/params.h
 )
 
-target_link_libraries(gauge_heatbath PRIVATE Eigen3::Eigen)
+target_link_libraries(gauge_heatbath PRIVATE Eigen3::Eigen lime)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
     target_compile_options(gauge_heatbath PRIVATE
