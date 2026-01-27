@@ -26,34 +26,6 @@ double observables::mean_plaquette(const GaugeField &field, const Geometry &geo)
     return mean;
 }
 
-//Returns the value of the mean plaquette of the gauge field ignoring the frozen sites plaquettes
-double observables::mean_plaquette(const GaugeField &field, const mpi::GeometryFrozen &geo) {
-    double sum = 0.0;
-    size_t counter = 0;
-    SU3 U1, U2, U3, U4;
-    for (int t = 1; t<geo.L-1; t++){
-        for (int z = 1; z<geo.L-1; z++) {
-            for (int y = 1; y<geo.L-1; y++) {
-                for (int x = 1; x<geo.L-1; x++) {
-                    size_t site = geo.index(x,y,z,t);
-                    for (int mu = 0; mu < 4; mu++) {
-                        for (int nu = mu+1; nu<4; nu++) {
-                            U1 = field.view_link_const(site, mu);
-                            U2 = field.view_link_const(geo.get_neigh(site,mu,0), nu);
-                            U3 = field.view_link_const(geo.get_neigh(site,nu,0), mu).adjoint();
-                            U4 = field.view_link_const(site, nu).adjoint();
-                            sum += (U1*U2*U3*U4).trace().real()/3.0;
-                            counter++;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    double mean = sum / static_cast<double>(counter);
-    return mean;
-}
-
 //Returns the value of the Wilson action of the gauge field
 double observables::wilson_action(const GaugeField &field, const Geometry &geo) {
     double action = 0.0;
