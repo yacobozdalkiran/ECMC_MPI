@@ -26,7 +26,7 @@ void generate(const RunParams &run_params) {
     std::mt19937_64 rng(rd());
 
     //Create the geometry and the field (cold)
-    mpi::GeometryFrozen geo(L);
+    GeometryHaloECMC geo(L);
     GaugeField field(geo);
 
     //Initialize the field
@@ -120,12 +120,15 @@ void generate_fullshift(const RunParams &run_params) {
     std::mt19937_64 rng(run_params.seed+topo.rank);
 
     //Create the geometry and the field (cold)
-    mpi::GeometryFrozen geo(L);
+    GeometryHaloECMC geo(L);
     GaugeField field(geo);
 
     //Initialize the field
     if (!run_params.cold_start) field.hot_start(rng);
 
+    //Create the ECMC halos
+    HaloECMC halo_ecmc(geo);
+    mpi::ecmc::fill_and_exchange(field, geo, halo_ecmc, topo);
     //Create the observables halos
     HaloObs halo_obs(geo);
 
@@ -164,6 +167,7 @@ void generate_fullshift(const RunParams &run_params) {
     }
 
     for (int gshiftc = 0; gshiftc<n_shift; gshiftc++) {
+        //Shifts
         if (topo.rank == 0) std::cout << "Shift " << gshiftc << " (X)";
         sp.coord=X;
         mpi::shift::shift(field, geo, halo_shift, topo, sp);
@@ -176,6 +180,9 @@ void generate_fullshift(const RunParams &run_params) {
         if (topo.rank == 0) std::cout <<  "(T)\n";
         sp.coord=T;
         mpi::shift::shift(field, geo, halo_shift, topo, sp);
+
+        //Fill the halo for ECMC
+        mpi::ecmc::fill_and_exchange(field, geo, halo_ecmc, topo);
 
         plaquette[gshiftc] = mpi::ecmc::samples_improved(field, geo, ecmc_params, rng, halo_obs, topo);
     }

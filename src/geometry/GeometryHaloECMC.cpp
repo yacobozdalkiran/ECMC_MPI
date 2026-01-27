@@ -14,7 +14,7 @@ GeometryHaloECMC::GeometryHaloECMC(int L_) {
         for (int z = 0; z < L; z++) {
             for (int y = 0; y < L; y++) {
                 for (int x = 0; x < L; x++) {
-                    size_t i = index_site_neigh(x, y, z, t);
+                    size_t i = index_w_halo(x, y, z, t);
                     //Interior (field)
                     if (x+1<L) neighbors[index_neigh(i,0,up)] = index((x + 1), y, z, t);
                     if (x-1 >= 0) neighbors[index_neigh(i,0,down)] = index((x - 1), y, z, t);
@@ -37,7 +37,7 @@ GeometryHaloECMC::GeometryHaloECMC(int L_) {
     for (int c1=0; c1<L; c1++) {
         for (int c2=0; c2<L; c2++) {
             for (int c3=0; c3<L; c3++) {
-                size_t i = index_site_neigh(L, c1, c2, c3);
+                size_t i = index_w_halo(L, c1, c2, c3);
                 neighbors[index_neigh(i,0,down)] = index(L-1, c1, c2, c3);
                 if (c1+1<L)  neighbors[index_neigh(i, 1, up)] = V + index_halo_ecmc(c1+1,c2,c3);
                 if (c1-1>=0) neighbors[index_neigh(i, 1, down)] = V + index_halo_ecmc(c1-1,c2,c3);
@@ -46,7 +46,7 @@ GeometryHaloECMC::GeometryHaloECMC(int L_) {
                 if (c3+1<L)  neighbors[index_neigh(i, 3, up)] = V + index_halo_ecmc(c1,c2,c3+1);
                 if (c3-1>=0) neighbors[index_neigh(i, 3, down)] = V + index_halo_ecmc(c1,c2,c3-1);
 
-                i = index_site_neigh(c1, L, c2, c3);
+                i = index_w_halo(c1, L, c2, c3);
                 neighbors[index_neigh(i,1,down)] = index(c1, L-1, c2, c3);
                 if (c1+1<L) neighbors[index_neigh(i, 0, up)] = V+V_halo+ index_halo_ecmc(c1+1,c2,c3);
                 if (c1-1>=0) neighbors[index_neigh(i, 0, down)] = V+V_halo+ index_halo_ecmc(c1-1,c2,c3);
@@ -55,7 +55,7 @@ GeometryHaloECMC::GeometryHaloECMC(int L_) {
                 if (c3+1<L)  neighbors[index_neigh(i, 3, up)] = V+V_halo+ index_halo_ecmc(c1,c2,c3+1);
                 if (c3-1>=0) neighbors[index_neigh(i, 3, down)] = V+V_halo+ index_halo_ecmc(c1,c2,c3-1);
 
-                i = index_site_neigh(c1, c2, L, c3);
+                i = index_w_halo(c1, c2, L, c3);
                 neighbors[index_neigh(i,2,down)] = index(c1, c2, L-1, c3);
                 if (c1+1<L) neighbors[index_neigh(i, 0, up)] = V + 2*V_halo +index_halo_ecmc(c1+1,c2,c3);
                 if (c1-1>=0) neighbors[index_neigh(i, 0, down)] = V + 2*V_halo +index_halo_ecmc(c1-1,c2,c3);
@@ -64,7 +64,7 @@ GeometryHaloECMC::GeometryHaloECMC(int L_) {
                 if (c3+1<L)  neighbors[index_neigh(i, 3, up)] = V + 2*V_halo +index_halo_ecmc(c1,c2,c3+1);
                 if (c3-1>=0) neighbors[index_neigh(i, 3, down)] = V + 2*V_halo +index_halo_ecmc(c1,c2,c3-1);
 
-                i = index_site_neigh(c1, c2, c3, L);
+                i = index_w_halo(c1, c2, c3, L);
                 neighbors[index_neigh(i,3,down)] = index(c1, c2, c3, L);
                 if (c1+1<L) neighbors[index_neigh(i, 0, up)] = V+3*V_halo+index_halo_ecmc(c1+1,c2,c3);
                 if (c1-1>=0) neighbors[index_neigh(i, 0, down)] = V+3*V_halo +index_halo_ecmc(c1-1,c2,c3);
@@ -72,7 +72,63 @@ GeometryHaloECMC::GeometryHaloECMC(int L_) {
                 if (c2-1>=0) neighbors[index_neigh(i, 1, down)] = V+3*V_halo +index_halo_ecmc(c1,c2-1,c3);
                 if (c3+1<L)  neighbors[index_neigh(i, 2, up)] = V+3*V_halo +index_halo_ecmc(c1,c2,c3+1);
                 if (c3-1>=0) neighbors[index_neigh(i, 2, down)] = V+3*V_halo +index_halo_ecmc(c1,c2,c3-1);
+            }
+        }
+    }
 
+    frozen.resize((V+4*V_halo)*4, false);
+    for (int t = 0; t < L; t++) {
+        for (int z = 0; z < L; z++) {
+            for (int y = 0; y < L; y++) {
+                for (int x = 0; x < L; x++) {
+                    size_t site = index_w_halo(x, y, z, t);
+                    for (int mu = 0; mu < 4; mu++) {
+                        if ((x == 0 && mu != 0) || (y == 0 && mu != 1) ||
+                            (z == 0 && mu != 2) || (t == 0 && mu != 3)) {
+                            frozen[index_frozen(site, mu)] = true;
+                            }
+                    }
+                }
+            }
+        }
+    }
+
+    //Security-> we freeze the halos
+    for (size_t s = V; s < V + 4 * V_halo; ++s) {
+        for (int mu = 0; mu < 4; ++mu) {
+            frozen[index_frozen(s, mu)] = true;
+        }
+    }
+
+    links_staples.resize(V*4*6*3, std::make_pair(SIZE_MAX, -1)); //4 links per site, 6 staples per link, 3 links per staple
+    for (int t = 0; t < L; t++) {
+        for (int z = 0; z < L; z++) {
+            for (int y = 0; y < L; y++) {
+                for (int x = 0; x < L; x++) {
+                    size_t site = index(x, y, z, t); //x
+                    for (int mu = 0; mu < 4; mu++) {
+                        if (!is_frozen(site, mu)) {
+                            int j = 0;
+                            for (int nu = 0; nu < 4; nu++) {
+                                if (nu == mu) continue;
+
+                                size_t xmu = get_neigh(site, mu,up); //x+mu
+                                size_t xnu = get_neigh(site, nu,up); //x+nu
+                                size_t xmunu = get_neigh(xmu, nu,down); //x+mu-nu
+                                size_t xmnu = get_neigh(site, nu,down); //x-nu
+
+                                links_staples[index_staples(site, mu, j, 0)] = {xmu, nu};
+                                links_staples[index_staples(site, mu, j, 1)] = {xnu, mu};
+                                links_staples[index_staples(site, mu, j, 2)] = {site, nu};
+                                links_staples[index_staples(site, mu, j+1, 0)] = {xmunu, nu};
+                                links_staples[index_staples(site, mu, j+1, 1)] = {xmnu, mu};
+                                links_staples[index_staples(site, mu, j+1, 2)] = {xmnu, nu};
+
+                                j += 2;
+                            }
+                        }
+                    }
+                }
             }
         }
     }

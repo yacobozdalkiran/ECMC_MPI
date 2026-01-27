@@ -6,7 +6,6 @@
 #define ECMC_MPI_GEOMETRYHALOECMC_H
 
 #include <vector>
-#include <array>
 #include <iostream>
 
 enum dir {
@@ -22,6 +21,8 @@ public:
     size_t V_halo;
 private:
     std::vector<size_t> neighbors;
+    std::vector<bool> frozen;
+    std::vector<std::pair<size_t, int>> links_staples;
 
 public:
     explicit GeometryHaloECMC(int L_);
@@ -36,7 +37,8 @@ public:
         return (c3*L + c2)*L+c1;
     }
 
-    [[nodiscard]] size_t index_site_neigh(int x, int y, int z, int t) const {
+    //Index of a site taking into account halos
+    [[nodiscard]] size_t index_w_halo(int x, int y, int z, int t) const {
         if (x==L) {
             return (V+index_halo_ecmc(y,z,t));
         }
@@ -52,8 +54,34 @@ public:
         return index(x,y,z,t);
     }
 
-    [[nodiscard]] size_t index_neigh(size_t site, int mu, dir d) {
+    //Index of a site in neighbor vector
+    [[nodiscard]] static size_t index_neigh(size_t site, int mu, dir d) {
         return site*8+mu*2+d;
+    }
+
+    //Index of a link in is_frozen
+    [[nodiscard]] static size_t index_frozen(size_t site, int mu) {
+        return site*4+mu;
+    }
+
+    //Index of a link in links_staples
+    [[nodiscard]] static size_t index_staples(size_t site, int mu, int i_staple, int i_link) {
+        return site*3*6*4 + mu*3*6 + i_staple*3 + i_link;
+    }
+
+    //Get a neighbor
+    [[nodiscard]] size_t get_neigh(size_t site, int mu, dir d) const {
+        return neighbors[index_neigh(site, mu, d)];
+    }
+
+    //Returns true if link is frozen
+    [[nodiscard]] bool is_frozen(size_t site, int mu) const {
+        return frozen[index_frozen(site, mu)];
+    }
+
+    //Returns the coords of the link of index i_link of the staple of index i_staple of <site,mu>
+    [[nodiscard]] std::pair<size_t,int> get_link_staple(size_t site, int mu, int i_staple, int i_link) const {
+        return links_staples[index_staples(site, mu, i_staple, i_link)];
     }
 };
 

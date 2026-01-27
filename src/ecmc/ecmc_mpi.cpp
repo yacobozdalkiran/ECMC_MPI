@@ -7,7 +7,7 @@
 #include "../su3/utils.h"
 
 //Computes the list of the 6 staples around a gauge link
-void mpi::ecmc::compute_list_staples(const GaugeField &field, const mpi::GeometryFrozen &geo, size_t site, int mu,
+void mpi::ecmc::compute_list_staples(const GaugeField &field, const GeometryHaloECMC &geo, size_t site, int mu,
     std::array<SU3, 6> &list_staple) {
     size_t index = 0;
     for (int nu = 0; nu < 4; nu++) {
@@ -15,10 +15,10 @@ void mpi::ecmc::compute_list_staples(const GaugeField &field, const mpi::Geometr
             continue;
         }
         size_t x = site; //x
-        size_t xmu = geo.get_neigh(x,mu,0); //x+mu
-        size_t xnu = geo.get_neigh(x,nu,0); //x+nu
-        size_t xmunu = geo.get_neigh(xmu,nu,1); //x+mu-nu
-        size_t xmnu = geo.get_neigh(x,nu,1); //x-nu
+        size_t xmu = geo.get_neigh(x,mu,up); //x+mu
+        size_t xnu = geo.get_neigh(x,nu,up); //x+nu
+        size_t xmunu = geo.get_neigh(xmu,nu,down); //x+mu-nu
+        size_t xmnu = geo.get_neigh(x,nu,down); //x-nu
         auto U0 = field.view_link_const(xmu, nu);
         auto U1 = field.view_link_const(xnu, mu);
         auto U2 = field.view_link_const(x, nu);
@@ -169,7 +169,7 @@ size_t mpi::ecmc::selectVariable(const std::array<double,4> &probas, std::mt1993
 }
 
 //Returns a new link, direction and R matrix for a lift
-std::pair<std::pair<size_t, int>, int> mpi::ecmc::lift_improved(const GaugeField &field, const mpi::GeometryFrozen &geo,
+std::pair<std::pair<size_t, int>, int> mpi::ecmc::lift_improved(const GaugeField &field, const GeometryHaloECMC &geo,
     size_t site, int mu, int j, SU3 &R, const SU3 &lambda_3, const std::vector<SU3> &set, std::mt19937_64 &rng) {
 
     std::array<std::pair<size_t, int>,4> links_plaquette_j; //We add the current link to get the plaquette
@@ -182,7 +182,6 @@ std::pair<std::pair<size_t, int>, int> mpi::ecmc::lift_improved(const GaugeField
     SU3 U1 = field.view_link_const(links_plaquette_j[1].first, links_plaquette_j[1].second);
     SU3 U2 = field.view_link_const(links_plaquette_j[2].first, links_plaquette_j[2].second);
     SU3 U3 = field.view_link_const(links_plaquette_j[3].first, links_plaquette_j[3].second);
-
     std::array<double,4> probas{};
     std::array<double,4> abs_dS{};
     double sum =0.0;
@@ -244,9 +243,9 @@ void mpi::ecmc::update(GaugeField &field, size_t site, int mu, double theta, int
 }
 
 //Returns a random non frozen site
-size_t mpi::ecmc::random_site(const mpi::GeometryFrozen &geo, std::mt19937_64 &rng) {
+size_t mpi::ecmc::random_site(const GeometryHaloECMC &geo, std::mt19937_64 &rng) {
     int L = geo.L;
-    std::uniform_int_distribution random_coord(1, L-2);
+    std::uniform_int_distribution random_coord(1, L-1);
     int x = random_coord(rng);
     int y = random_coord(rng);
     int z = random_coord(rng);
@@ -255,7 +254,7 @@ size_t mpi::ecmc::random_site(const mpi::GeometryFrozen &geo, std::mt19937_64 &r
 }
 
 //Generates samples of global mean plaquette using ECMC with frozen BC
-std::vector<double> mpi::ecmc::samples_improved(GaugeField &field, const mpi::GeometryFrozen &geo, const ECMCParams &params,
+std::vector<double> mpi::ecmc::samples_improved(GaugeField &field, const GeometryHaloECMC &geo, const ECMCParams &params,
     std::mt19937_64 &rng, HaloObs &halo_obs, mpi::MpiTopology &topo) {
     double beta = params.beta;
     int N_samples = params.N_samples;

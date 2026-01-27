@@ -13,7 +13,7 @@
 //Fills the send halo with the corresponding part of the lattice :
 //from coord = L - L_shift to coord = L-1 if stype = pos
 //from coord = 0 to coord = L_shift-1 if stype = neg
-void mpi::shift::fill_halo_send(const GaugeField &field, const GeometryFrozen &geo, Halo &halo,
+void mpi::shift::fill_halo_send(const GaugeField &field, const GeometryHaloECMC &geo, Halo &halo,
     const ShiftParams &sp) {
     if (sp.coord == X) {
         for (int t = 0; t < geo.L; t++) {
@@ -88,7 +88,7 @@ void mpi::shift::fill_halo_send(const GaugeField &field, const GeometryFrozen &g
 
 
 //Shifts the value of all the links of the lattice of L_shift in direction +coord if stype = pos, -coord if stpye = neg
-void mpi::shift::shift_field(GaugeField &field, const mpi::GeometryFrozen &geo, Halo &halo,
+void mpi::shift::shift_field(GaugeField &field, const GeometryHaloECMC &geo, Halo &halo,
     const ShiftParams &sp) {
     int L = geo.L;
     int L_shift = halo.L_shift;
@@ -281,7 +281,7 @@ void mpi::shift::exchange_halos(Halo &halo, mpi::MpiTopology &topo, const ShiftP
 }
 
 //Replace the values of the corresponding links of the lattice with those of halo_rec
-void mpi::shift::fill_lattice_with_halo_recv(GaugeField &field, const mpi::GeometryFrozen &geo, Halo &halo,
+void mpi::shift::fill_lattice_with_halo_recv(GaugeField &field, const GeometryHaloECMC &geo, Halo &halo,
     const ShiftParams &sp) {
     int L = geo.L;
     int L_shift = halo.L_shift;
@@ -417,7 +417,7 @@ void mpi::shift::fill_lattice_with_halo_recv(GaugeField &field, const mpi::Geome
 }
 
 //Performs a shift in every node in direction coord, of type stype (positive of negative) and of length L_shift
-void mpi::shift::shift(GaugeField &field, const mpi::GeometryFrozen &geo, Halo &halo, MpiTopology &topo,
+void mpi::shift::shift(GaugeField &field, const GeometryHaloECMC &geo, Halo &halo, MpiTopology &topo,
     const ShiftParams &sp) {
     if (halo.L_shift < sp.L_shift) {
         if (topo.rank == 0) std::cerr << "Wrong halo size : too small\n";
@@ -443,7 +443,7 @@ void mpi::shift::shift(GaugeField &field, const mpi::GeometryFrozen &geo, Halo &
 }
 
 //Fills the send buffers of halo_obs with the corresponding faces of the gauge field
-void mpi::observables::fill_halo_obs_send(const GaugeField &field, const mpi::GeometryFrozen &geo, HaloObs &halo_obs) {
+void mpi::observables::fill_halo_obs_send(const GaugeField &field, const GeometryHaloECMC &geo, HaloObs &halo_obs) {
     int L = geo.L;
     for (int c3 = 0; c3<L; c3++) {
         for (int c2 = 0; c2<L; c2++) {
@@ -496,15 +496,15 @@ void mpi::observables::exchange_halos_obs(HaloObs &halo_obs, mpi::MpiTopology &t
 }
 
 //Fills the halos with links of coord 0
-void mpi::ecmc::fill_halos_ecmc(const GaugeField &field, const mpi::GeometryFrozen &geo, HaloECMC &halo) {
-    for (int c1 = 0; c1<geo.L; c1++) {
+void mpi::ecmc::fill_halos_ecmc(const GaugeField &field, const GeometryHaloECMC &geo, HaloECMC &halo) {
+    for (int c3 = 0; c3<geo.L; c3++) {
         for (int c2 = 0; c2<geo.L; c2++) {
-            for (int c3 = 0; c3<geo.L; c3++) {
+            for (int c1 = 0; c1<geo.L; c1++) {
                 size_t fieldx0 = geo.index(0,c1,c2,c3);
                 size_t fieldy0 = geo.index(c1,0,c2,c3);
                 size_t fieldz0 = geo.index(c1,c2,0,c3);
                 size_t fieldt0 = geo.index(c1,c2,c3,0);
-                size_t site_halo = halo.index_halo_ecmc(c1,c2,c3);
+                size_t site_halo = geo.index_halo_ecmc(c1,c2,c3);
                 for (int mu=0; mu<4; mu++) {
                     halo.view_link(fx0, site_halo, mu) = field.view_link_const(fieldx0, mu);
                     halo.view_link(fy0, site_halo, mu) = field.view_link_const(fieldy0, mu);
@@ -517,20 +517,49 @@ void mpi::ecmc::fill_halos_ecmc(const GaugeField &field, const mpi::GeometryFroz
 }
 
 //Exchange the halos for ECMC
-void mpi::ecmc::exchange_halos_ecmc(const mpi::GeometryFrozen &geo, HaloECMC &halo, mpi::MpiTopology &topo) {
+void mpi::ecmc::exchange_halos_ecmc(const GeometryHaloECMC &geo, HaloECMC &halo, mpi::MpiTopology &topo) {
     MPI_Request reqs[8];
     int L = geo.L;
     //Setting up the recv
-    MPI_Irecv(halo.xL.data(), L*4*18, MPI_DOUBLE, topo.xL, 0, topo.cart_comm, &reqs[0]);
-    MPI_Irecv(halo.yL.data(), L*4*18, MPI_DOUBLE, topo.yL, 1, topo.cart_comm, &reqs[1]);
-    MPI_Irecv(halo.zL.data(), L*4*18, MPI_DOUBLE, topo.zL, 2, topo.cart_comm, &reqs[2]);
-    MPI_Irecv(halo.tL.data(), L*4*18, MPI_DOUBLE, topo.tL, 3, topo.cart_comm, &reqs[3]);
+    MPI_Irecv(halo.xL.data(), L*L*L*4*9, MPI_DOUBLE_COMPLEX, topo.xL, 0, topo.cart_comm, &reqs[0]);
+    MPI_Irecv(halo.yL.data(), L*L*L*4*9, MPI_DOUBLE_COMPLEX, topo.yL, 1, topo.cart_comm, &reqs[1]);
+    MPI_Irecv(halo.zL.data(), L*L*L*4*9, MPI_DOUBLE_COMPLEX, topo.zL, 2, topo.cart_comm, &reqs[2]);
+    MPI_Irecv(halo.tL.data(), L*L*L*4*9, MPI_DOUBLE_COMPLEX, topo.tL, 3, topo.cart_comm, &reqs[3]);
     //Setting up the sends
-    MPI_Isend(halo.x0.data(), L*4*18, MPI_DOUBLE, topo.x0, 0, topo.cart_comm, &reqs[4]);
-    MPI_Isend(halo.y0.data(), L*4*18, MPI_DOUBLE, topo.y0, 1, topo.cart_comm, &reqs[5]);
-    MPI_Isend(halo.z0.data(), L*4*18, MPI_DOUBLE, topo.z0, 2, topo.cart_comm, &reqs[6]);
-    MPI_Isend(halo.t0.data(), L*4*18, MPI_DOUBLE, topo.t0, 3, topo.cart_comm, &reqs[7]);
+    MPI_Isend(halo.x0.data(), L*L*L*4*9, MPI_DOUBLE_COMPLEX, topo.x0, 0, topo.cart_comm, &reqs[4]);
+    MPI_Isend(halo.y0.data(), L*L*L*4*9, MPI_DOUBLE_COMPLEX, topo.y0, 1, topo.cart_comm, &reqs[5]);
+    MPI_Isend(halo.z0.data(), L*L*L*4*9, MPI_DOUBLE_COMPLEX, topo.z0, 2, topo.cart_comm, &reqs[6]);
+    MPI_Isend(halo.t0.data(), L*L*L*4*9, MPI_DOUBLE_COMPLEX, topo.t0, 3, topo.cart_comm, &reqs[7]);
     //Waiting for sync
     MPI_Waitall(8, reqs, MPI_STATUSES_IGNORE);
+}
+
+//Fills the links vector of the gauge field with the halos
+void mpi::ecmc::fill_halo_field(GaugeField &field, const GeometryHaloECMC &geo, const HaloECMC &halo) {
+    for (int c3=0; c3<geo.L; c3++) {
+        for (int c2=0; c2<geo.L; c2++) {
+            for (int c1=0; c1<geo.L; c1++) {
+                size_t site_halo = geo.index_halo_ecmc(c1, c2, c3);
+                size_t site_xL = geo.index_w_halo(geo.L, c1, c2, c3);
+                size_t site_yL = geo.index_w_halo(c1,geo.L, c2, c3);
+                size_t site_zL = geo.index_w_halo(c1, c2, geo.L, c3);
+                size_t site_tL = geo.index_w_halo(c1, c2, c3, geo.L);
+                for (int mu=0; mu<4; mu++) {
+                    field.view_link(site_xL, mu) = halo.view_link_const(fxL, site_halo, mu);
+                    field.view_link(site_yL, mu) = halo.view_link_const(fyL, site_halo, mu);
+                    field.view_link(site_zL, mu) = halo.view_link_const(fzL, site_halo, mu);
+                    field.view_link(site_tL, mu) = halo.view_link_const(ftL, site_halo, mu);
+                }
+            }
+        }
+    }
+}
+
+//One function to fill correctly the gauge field with ECMC halos
+void mpi::ecmc::fill_and_exchange(GaugeField &field, const GeometryHaloECMC &geo, HaloECMC &halo,
+    mpi::MpiTopology &topo) {
+    fill_halos_ecmc(field, geo, halo);
+    exchange_halos_ecmc(geo, halo, topo);
+    fill_halo_field(field, geo, halo);
 }
 

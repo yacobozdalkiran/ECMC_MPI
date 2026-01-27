@@ -1,7 +1,7 @@
-L_core=6
+L_core=5
 n_core_dims=2
 cold_start=false
-L_shift=3
+L_shift=2
 n_shift=100
 stype_pos=true
 seed=12345

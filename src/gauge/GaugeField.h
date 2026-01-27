@@ -33,7 +33,7 @@ public:
         }
     }
 
-    //Initializes a squared cold gauge conf
+    //Initializes a squared cold gauge conf with halos
     explicit GaugeField(const GeometryHaloECMC &geo):L(geo.L), T(geo.L), V(geo.V), V_halo(geo.V_halo), links((V+4*V_halo)*4*9, Complex(0.0,0.0)) {
         for (size_t site = 0; site < V; site++) {
             for (int mu = 0; mu<4; mu++) {

@@ -6,7 +6,7 @@
 #include "../mpi/HalosExchange.h"
 
 //Returns the sum of retr/3 of plaquettes of the bulk (i.e. coords btw 0 and L-2)
-double mpi::observables::sum_plaquette_bulk(const GaugeField &field, const mpi::GeometryFrozen &geo) {
+double mpi::observables::sum_plaquette_bulk(const GaugeField &field, const GeometryHaloECMC &geo) {
     double sum = 0.0;
     SU3 U1, U2, U3, U4;
     for (int t = 0; t<geo.L-1; t++){
@@ -17,8 +17,8 @@ double mpi::observables::sum_plaquette_bulk(const GaugeField &field, const mpi::
                     for (int mu = 0; mu < 4; mu++) {
                         for (int nu = mu+1; nu<4; nu++) {
                             U1 = field.view_link_const(site, mu);
-                            U2 = field.view_link_const(geo.get_neigh(site,mu,0), nu);
-                            U3 = field.view_link_const(geo.get_neigh(site,nu,0), mu).adjoint();
+                            U2 = field.view_link_const(geo.get_neigh(site,mu,up), nu);
+                            U3 = field.view_link_const(geo.get_neigh(site,nu,up), mu).adjoint();
                             U4 = field.view_link_const(site, nu).adjoint();
                             sum += (U1*U2*U3*U4).trace().real()/3.0;
                         }
@@ -31,7 +31,7 @@ double mpi::observables::sum_plaquette_bulk(const GaugeField &field, const mpi::
 }
 
 //Returns the sum of retr/3 of plaquettes on the boundaries of the field using the halos
-double mpi::observables::sum_plaquette_boundaries(const GaugeField &field, const mpi::GeometryFrozen &geo,
+double mpi::observables::sum_plaquette_boundaries(const GaugeField &field, const GeometryHaloECMC &geo,
     const HaloObs &halo_obs) {
     double sum_boundaries = 0.0;
     int L = geo.L;
@@ -60,7 +60,7 @@ double mpi::observables::sum_plaquette_boundaries(const GaugeField &field, const
 }
 
 //Returns the sum of retr of plaquettes of the local field (includes halo filling and exchange)
-double mpi::observables::mean_plaquette_local(const GaugeField &field, const mpi::GeometryFrozen &geo,
+double mpi::observables::mean_plaquette_local(const GaugeField &field, const GeometryHaloECMC &geo,
                                               HaloObs &halo_obs, mpi::MpiTopology &topo) {
     double local_mean_plaquette = 0.0;
     MPI_Request reqs[16];
@@ -76,7 +76,7 @@ double mpi::observables::mean_plaquette_local(const GaugeField &field, const mpi
 }
 
 //Returns the mean plaquette of the global lattice
-double mpi::observables::mean_plaquette_global(const GaugeField &field, const mpi::GeometryFrozen &geo,
+double mpi::observables::mean_plaquette_global(const GaugeField &field, const GeometryHaloECMC &geo,
     HaloObs &halo_obs, mpi::MpiTopology &topo) {
     double local_mean_plaquette = mean_plaquette_local(field, geo, halo_obs, topo);
     double global_mean_plaquette = 0.0;
