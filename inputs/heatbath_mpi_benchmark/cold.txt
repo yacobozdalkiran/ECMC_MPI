@@ -2,11 +2,11 @@ L_core=5
 n_core_dims=2
 cold_start=true
 L_shift=2
-n_shift=100
+n_shift=50
 stype_pos=true
 seed=12345
 
 beta = 6.0
-N_samples = 300
+N_samples = 100
 N_sweeps = 8
 N_hits = 16
