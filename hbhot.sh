@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=hbcold30k
+#SBATCH --job-name=hbhot
 #SBATCH --output=%x.o
 #SBATCH --time=02:00:00
 #SBATCH --nodes=1
@@ -12,4 +12,4 @@
 source modules_load.sh
 
 # Run MPI script
-srun build/gauge_heatbath_mpi inputs/heatbath_mpi_benchmark/cold30k.txt
+srun build/gauge_heatbath_mpi inputs/heatbath_mpi_benchmark/hot.txt
