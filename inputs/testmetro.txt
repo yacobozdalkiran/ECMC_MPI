@@ -5,7 +5,7 @@ seed = 12345
 
 beta = 6.0
 epsilon = 0.15
-N_samples = 30000
+N_samples = 30
 N_sweeps_meas = 1
 N_hits = 1
 N_burnin = 0

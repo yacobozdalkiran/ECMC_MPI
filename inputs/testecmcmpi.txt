@@ -2,12 +2,12 @@ L_core=5
 n_core_dims=2
 cold_start=false
 L_shift=2
-n_shift=100
+n_shift=10
 stype_pos=true
 seed=12345
 
 beta=6.0
-N_samples=300
+N_samples=30
 param_theta_sample=350
 param_theta_refresh=150
 poisson=false

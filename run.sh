@@ -8,5 +8,8 @@
 #SBATCH --ntasks-per-node=16
 #SBATCH --partition=cpu_med
 
+#Source necessary modules
+source modules_load.sh
+
 # Run MPI script
 srun build/gauge_ecmc_mpi inputs/hot30k.txt

@@ -1,9 +1,9 @@
-L = 8
-T = 8
+L = 4
+T = 4
 cold_start = true
 seed = 12345
 
 beta = 6.0
-N_samples = 30000
+N_samples = 30
 N_sweeps = 1
 N_hits = 1
