@@ -39,7 +39,7 @@ void write_output(const std::vector<double> &meas, const RunParamsMetro &rp) {
 //Reads the parameters of the input file into params
 void read_params(RunParamsMetro &params, const std::string &input) {
     try {
-        io::load_params_metro(input, params);
+        io::load_params(input, params);
     } catch (const std::exception& e) {
         std::cerr << "Error reading input : " << e.what() << std::endl;
     }

@@ -67,4 +67,15 @@ struct RunParamsHb {
     HbParams hp{};
 };
 
+struct RunParamsHbMPI {
+    int L_core = 6;
+    int n_core_dims = 2;
+    bool cold_start = true;
+    int L_shift = 2;
+    int n_shift = 1; //number of shifts in all the directions
+    bool stype_pos=true; //Are the shifts positives ?
+    int seed = 123;
+    HbParams hp{};
+};
+
 #endif //ECMC_MPI_PARAMS_H

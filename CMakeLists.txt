@@ -38,7 +38,6 @@ add_executable(gauge_ecmc_mpi src/bin/gauge_ecmc_mpi.cpp
         src/gauge/GaugeField.cpp
         src/su3/utils.cpp
         src/observables/observables_mpi.cpp
-        src/geometry/GeometryFrozen.cpp
         src/mpi/MpiTopology.cpp
         src/mpi/HalosExchange.cpp
         src/mpi/Halo.h
@@ -46,7 +45,6 @@ add_executable(gauge_ecmc_mpi src/bin/gauge_ecmc_mpi.cpp
         src/io/io.cpp
         src/io/params.h
         src/geometry/GeometryHaloECMC.cpp
-        src/geometry/GeometryHaloECMC.h
 )
 
 
@@ -154,3 +152,37 @@ else()
             -Wall -Wextra -Wpedantic
 )
 endif()
+
+add_executable(gauge_heatbath_mpi src/bin/gauge_heatbath_mpi.cpp
+        src/heatbath/heatbath.cpp
+        src/gauge/GaugeField.cpp
+        src/su3/utils.cpp
+        src/observables/observables_mpi.cpp
+        src/observables/observables.cpp
+        src/mpi/MpiTopology.cpp
+        src/mpi/HalosExchange.cpp
+        src/mpi/Halo.h
+        src/ecmc/ecmc_mpi.cpp
+        src/io/io.cpp
+        src/io/params.h
+        src/geometry/GeometryHaloECMC.cpp
+        src/heatbath/heatbath_mpi.cpp
+)
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+    target_compile_options(gauge_heatbath_mpi PRIVATE
+            -O2
+            #-xHost            # Remplace -march=native pour Intel
+            -fp-model precise
+            -Wall -Wextra
+    )
+else()
+    target_compile_options(gauge_heatbath_mpi PRIVATE
+            -O2
+            #-ffast-math
+            #-march=native
+            -Wall -Wextra -Wpedantic
+    )
+endif()
+
+target_link_libraries(gauge_heatbath_mpi PRIVATE MPI::MPI_CXX Eigen3::Eigen lime)

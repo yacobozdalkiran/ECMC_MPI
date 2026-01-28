@@ -25,8 +25,8 @@ void print_params(const RunParamsSC &rp) {
     std::cout << "==========================================" << std::endl;
 }
 
-//Write the output
-void write_output(const std::vector<double> &meas, const RunParamsSC &rp) {
+//Filename of the outputs
+std::string conf_name(const RunParamsSC &rp) {
     int precision_filename = 1;
     std::string filename = "E_L"+std::to_string(rp.L)
                             + "T"+std::to_string(rp.T)
@@ -35,14 +35,13 @@ void write_output(const std::vector<double> &meas, const RunParamsSC &rp) {
                             + "ts" + io::format_double(rp.ecmc_params.param_theta_sample, 0)
                             + "tr" + io::format_double(rp.ecmc_params.param_theta_refresh, 0)
                             + "Ns" + std::to_string(rp.ecmc_params.N_samples);
-    int precision = 10;
-    io::save_double(meas, filename, precision);
+    return filename;
 }
 
 //Reads the parameters of the input file into params
 void read_params(RunParamsSC &params, const std::string &input) {
     try {
-        io::load_params_sc(input, params);
+        io::load_params(input, params);
     } catch (const std::exception& e) {
         std::cerr << "Error reading input : " << e.what() << std::endl;
     }
@@ -70,8 +69,14 @@ void generate_sc(const RunParamsSC &rp) {
     std::cout << "Max drift from unitarity : " << observables::max_drift_det(field, geo) << "\n";
 
     //Output
-    write_output(meas, rp);
-    io::ildg::save_ildg(field, geo, "conf");
+    int precision = 10;
+    std::string filename = conf_name(rp);
+    io::save_double(meas, filename, precision);
+    io::ildg::save_ildg(field, geo, filename);
+    std::cout <<"Before save <P> = " << observables::mean_plaquette(field, geo) << "\n";
+    GaugeField field2(geo);
+    io::ildg::read_ildg(field2, geo, filename);
+    std::cout <<"After save <P> = " << observables::mean_plaquette(field2, geo) << "\n";
 }
 
 //Binary gauge_single_core to generate single core lattice gauge configurations with ECMC

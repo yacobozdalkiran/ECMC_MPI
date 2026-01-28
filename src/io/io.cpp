@@ -11,8 +11,6 @@
 extern "C" {
     #include <lime.h>
 }
-
-
 #include "io.h"
 
 namespace fs = std::filesystem;
@@ -141,7 +139,7 @@ void io::load_params(const std::string& filename, RunParams& rp) {
 }
 
 //Loads the parameters for single core generation in filename into RunParamsSC rp
-void io::load_params_sc(const std::string &filename, RunParamsSC &rp) {
+void io::load_params(const std::string &filename, RunParamsSC &rp) {
     std::ifstream file(filename);
     if (!file.is_open()) throw std::runtime_error("Can't open file " + filename);
 
@@ -176,7 +174,7 @@ void io::load_params_sc(const std::string &filename, RunParamsSC &rp) {
 }
 
 //Loads the parameters for Metropolis generations from input file
-void io::load_params_metro(const std::string &filename, RunParamsMetro &rp) {
+void io::load_params(const std::string &filename, RunParamsMetro &rp) {
     std::ifstream file(filename);
     if (!file.is_open()) throw std::runtime_error("Can't open file " + filename);
 
@@ -210,7 +208,7 @@ void io::load_params_metro(const std::string &filename, RunParamsMetro &rp) {
     if (config.count("N_set"))           rp.mp.N_set= std::stoi(config["N_set"]);
 }
 
-void io::load_params_hb(const std::string &filename, RunParamsHb &rp) {
+void io::load_params(const std::string &filename, RunParamsHb &rp) {
     std::ifstream file(filename);
     if (!file.is_open()) throw std::runtime_error("Can't open file " + filename);
 
@@ -234,7 +232,41 @@ void io::load_params_hb(const std::string &filename, RunParamsHb &rp) {
     if (config.count("cold_start"))  rp.cold_start = (config["cold_start"] == "true");
     if (config.count("seed"))  rp.seed = std::stoi(config["seed"]);
 
-    //Metropolis params
+    //Hb params
+    if (config.count("beta"))                rp.hp.beta = std::stod(config["beta"]);
+    if (config.count("N_samples"))           rp.hp.N_samples = std::stoi(config["N_samples"]);
+    if (config.count("N_sweeps"))           rp.hp.N_sweeps = std::stoi(config["N_sweeps"]);
+    if (config.count("N_hits"))           rp.hp.N_hits = std::stoi(config["N_hits"]);
+}
+
+void io::load_params(const std::string &filename, RunParamsHbMPI &rp) {
+    std::ifstream file(filename);
+    if (!file.is_open()) throw std::runtime_error("Can't open file " + filename);
+
+    std::map<std::string, std::string> config;
+    std::string line;
+
+    while (std::getline(file, line)) {
+        //Ignore comments and empty lines
+        if (line.empty() || line[0] == '#') continue;
+
+        std::istringstream is_line(line);
+        std::string key, value;
+        if (std::getline(is_line, key, '=') && std::getline(is_line, value)) {
+            config[trim(key)] = trim(value);
+        }
+    }
+
+    //Lattice params
+    if (config.count("L_core"))      rp.L_core = std::stoi(config["L_core"]);
+    if (config.count("n_core_dims")) rp.n_core_dims = std::stoi(config["n_core_dims"]);
+    if (config.count("cold_start"))  rp.cold_start = (config["cold_start"] == "true");
+    if (config.count("L_shift"))     rp.L_shift = std::stoi(config["L_shift"]);
+    if (config.count("n_shift"))     rp.n_shift = std::stoi(config["n_shift"]);
+    if (config.count("stype_pos"))   rp.stype_pos = (config["stype_pos"] == "true");
+    if (config.count("seed"))      rp.seed= std::stoi(config["seed"]);
+
+    //Hb params
     if (config.count("beta"))                rp.hp.beta = std::stod(config["beta"]);
     if (config.count("N_samples"))           rp.hp.N_samples = std::stoi(config["N_samples"]);
     if (config.count("N_sweeps"))           rp.hp.N_sweeps = std::stoi(config["N_sweeps"]);
@@ -324,4 +356,71 @@ void io::ildg::save_ildg(const GaugeField &field, const Geometry &geo, const std
     limeDestroyWriter(writer);
     fclose(fp);
     std::cout << "Configuration written in " << filepath << "\n";
+}
+
+void io::ildg::read_ildg(GaugeField &field, const Geometry &geo, const std::string &filename) {
+    fs::path dir("data");
+    fs::path filepath = dir/ (filename+".ildg");
+    FILE *fp = fopen(filepath.c_str(), "rb");
+    if (!fp) throw std::runtime_error("Impossible d'ouvrir le fichier : " + filename);
+
+    std::cout << "Reading configuration from " << filepath << "\n";
+    LimeReader *reader = limeCreateReader(fp);
+    bool data_found = false;
+
+    // Parcourir les records du fichier LIME
+    while (limeReaderNextRecord(reader) == LIME_SUCCESS) {
+        char* type = limeReaderType(reader);
+
+        // On cherche uniquement le record binaire
+        if (std::string(type) == "ildg-binary-data") {
+            data_found = true;
+
+            n_uint64_t nbytes = limeReaderBytes(reader);
+            n_uint64_t expected_bytes = (n_uint64_t) geo.V * 4 * 9 * sizeof(std::complex<double>);
+
+            if (nbytes != expected_bytes) {
+                throw std::runtime_error("Taille du fichier ILDG incohérente avec le volume du GaugeField !");
+            }
+
+            // Lecture site par site, mu par mu
+            for (size_t site = 0; site < geo.V; ++site) {
+                for (int mu = 0; mu < 4; ++mu) {
+
+                    // On lit 18 doubles (9 complexes)
+                    double buffer[18];
+                    n_uint64_t to_read = 18 * sizeof(double);
+                    limeReaderReadData(buffer, &to_read, reader);
+
+                    // Conversion Big-Endian -> Little-Endian
+                    for (int i = 0; i < 18; ++i) {
+                        uint64_t *u = reinterpret_cast<uint64_t*>(&buffer[i]);
+                        *u = __builtin_bswap64(*u);
+                    }
+
+                    // On "map" le buffer vers une matrice Eigen temporaire (Row-Major)
+                    // Puis on l'affecte à notre view_link
+
+                    // Méthode plus sûre pour copier les données vers votre vecteur 'links' via le Map
+                    auto link = field.view_link(site, mu);
+                    for(int i=0; i<3; ++i) {
+                        for(int j=0; j<3; ++j) {
+                            // ILDG stocke : Re(0,0), Im(0,0), Re(0,1), Im(0,1)...
+                            double re = buffer[2 * (i * 3 + j)];
+                            double im = buffer[2 * (i * 3 + j) + 1];
+                            link(i, j) = std::complex<double>(re, im);
+                        }
+                    }
+                }
+            }
+            break; // Données lues, on peut sortir
+        }
+    }
+
+    if (!data_found) {
+        throw std::runtime_error("Record 'ildg-binary-data' has not been found in the file.");
+    }
+
+    limeDestroyReader(reader);
+    fclose(fp);
 }

@@ -17,4 +17,5 @@ namespace heatbath {
     std::vector<double> samples(GaugeField &field, const Geometry &geo, const HbParams &params, std::mt19937_64 &rng);
 }
 
+
 #endif //ECMC_MPI_HEATBATH_H

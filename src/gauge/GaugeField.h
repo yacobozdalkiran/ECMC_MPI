@@ -58,6 +58,7 @@ public:
     void projection_su3(size_t site, int mu);
     void project_field_su3();
     void compute_staple(const Geometry &geo, size_t site, int mu, SU3 &staple) const;
+    void compute_staple(const GeometryHaloECMC &geo, size_t site, int mu, SU3 &staple) const;
 };
 
 #endif //INC_4D_MPI_GAUGEFIELD_H

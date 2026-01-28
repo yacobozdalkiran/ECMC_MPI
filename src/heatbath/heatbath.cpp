@@ -107,3 +107,4 @@ std::vector<double> heatbath::samples(GaugeField &field, const Geometry &geo, co
     }
     return meas;
 }
+

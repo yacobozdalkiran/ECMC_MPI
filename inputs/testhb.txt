@@ -1,5 +1,5 @@
-L = 4
-T = 4
+L = 8
+T = 8
 cold_start = true
 seed = 12345
 
