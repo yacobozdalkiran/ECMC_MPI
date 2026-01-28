@@ -12,4 +12,4 @@
 source modules_load.sh
 
 # Run MPI script
-srun build/gauge_ecmc_mpi inputs/heatbath_mpi_benchmark/hot30k.txt
+srun build/gauge_heatbath_mpi inputs/heatbath_mpi_benchmark/hot30k.txt
