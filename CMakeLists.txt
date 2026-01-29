@@ -192,3 +192,8 @@ else()
 endif()
 
 target_link_libraries(gauge_heatbath_mpi PRIVATE MPI::MPI_CXX Eigen3::Eigen lime)
+
+add_executable(flow_test src/bin/flow_test.cpp
+    src/su3/utils.cpp)
+
+target_link_libraries(flow_test PRIVATE Eigen3::Eigen)

@@ -3,7 +3,7 @@
 //
 
 #include "utils.h"
-
+#include <unsupported/Eigen/MatrixFunctions>
 #include <iostream>
 #include "../gauge/GaugeField.h"
 
@@ -138,4 +138,10 @@ void proj_lie_su3(SU3 &A) {
     SU3 B = (0.5 * (A - A.adjoint())).eval(); //To avoid aliasing
     std::complex<double> tr_per_dim = B.trace() / 3.0;
     A = B - tr_per_dim * SU3::Identity();
+}
+
+//Returns the exponential of a lie algebra su(3) matrix Z
+//Eigen impl for prototyping at first
+SU3 exp_analytic(const SU3 &Z, double coeff) {
+    return (Z*coeff).exp();
 }
