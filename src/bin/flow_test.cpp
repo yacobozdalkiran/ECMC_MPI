@@ -3,18 +3,34 @@
 //
 
 #include <iostream>
-#include "../su3/utils.h"
-
+#include "../gauge/GaugeField.h"
+#include "../geometry/Geometry.h"
+#include "../flow/gradient_flow.h"
+#include "../heatbath/heatbath.h"
+#include "../observables/observables.h"
+#include "../io/params.h"
 
 int main() {
-    int seed = 1234;
+    //Params
+    int L=16;
+    int T=32;
+    double eps = 0.02;
+    int seed = 12345;
     std::mt19937_64 rng(seed);
-    SU3 M = random_su3(rng);
-    std::cout << M << "\n";
-    proj_lie_su3(M);
-    std::cout << "M :\n" << M <<"\n";
-    std::cout << "M_adj :\n" << M.adjoint() << ",\n Trace(M) : " << M.trace() << "\n";
-    SU3 expM = exp_analytic(M, 1.0);
-    std::cout << expM << "\n";
-    std::cout << "Determinant : " << expM.determinant() << ", exp(M)*adj :\n" << expM.adjoint()*expM << "\n";
+
+    //Objects
+    Geometry geo(L, T);
+    GaugeField field(geo);
+    field.hot_start(rng);
+    GradientFlow flow(eps, field, geo);
+
+    //Hb steps
+    HbParams hp{6.0, 20, 1, 1};
+    heatbath::samples(field, geo, hp, rng);
+
+    //Flow
+    for (int i = 0; i<1000; i++) {
+        std::cout << "t = " << i*eps << ", Q = " << observables::topo_charge_clover(flow.field_c, geo) << "\n";
+        flow.rk3_step();
+    }
 }
