@@ -25,8 +25,8 @@ namespace observables {
 
         return (inv & 1) ? -1 : +1; //Parity test on inv
     }
-    double local_topo_charge_clover(const GaugeField &field, const Geometry &geo, size_t site);
-    double topo_charge_clover(const GaugeField &field, const Geometry &geo);
+    std::pair<double,double> local_q_e_clover(const GaugeField &field, const Geometry &geo, size_t site);
+    std::pair<double,double> topo_q_e_clover(const GaugeField &field, const Geometry &geo);
 }
 
 #endif //ECMC_MPI_OBSERVABLES_H

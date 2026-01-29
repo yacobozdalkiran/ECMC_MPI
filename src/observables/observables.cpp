@@ -95,38 +95,46 @@ SU3 observables::clover_site(const GaugeField &field, const Geometry &geo, size_
     size_t xpmumnu = geo.get_neigh(xpmu,nu,1); //x+mu-nu
     SU3 clover = SU3::Zero();
     clover += field.view_link_const(x, mu) * field.view_link_const(xpmu, nu) * field.view_link_const(xpnu, mu).adjoint() * field.view_link_const(x, nu).adjoint();
-    clover += field.view_link_const(x, nu) * field.view_link_const(xmmupnu, mu).adjoint() * field.view_link_const(xmmu,nu).adjoint() * field.view_link_const(xmmu,mu).adjoint();
+    clover += field.view_link_const(x, nu) * field.view_link_const(xmmupnu, mu).adjoint() * field.view_link_const(xmmu,nu).adjoint() * field.view_link_const(xmmu,mu);
     clover += field.view_link_const(xmmu, mu).adjoint() * field.view_link_const(xmmumnu, nu).adjoint() * field.view_link_const(xmmumnu, mu) * field.view_link_const(xmnu, nu);
     clover += field.view_link_const(xmnu, nu).adjoint() * field.view_link_const(xmnu, mu) * field.view_link_const(xpmumnu, nu) * field.view_link_const(x, mu).adjoint();
-    clover = 0.25 * clover.imag();
-    return clover;
+    SU3 F = (clover - clover.adjoint()).eval();
+    F *= 0.125;
+    return F;
 }
 
-//Computes the local clover topological charge at site
-double observables::local_topo_charge_clover(const GaugeField &field, const Geometry &geo, size_t site) {
-    double q_clover = 0.0;
-    for (int mu = 0; mu < 4; mu++) {
-        for (int nu = 0; nu < 4; nu++) {
-            for (int rho =0; rho < 4; rho++) {
-                for (int sigma = 0; sigma < 4; sigma++) {
-                    if (levi_civita(mu,nu,rho,sigma) != 0) {
-                        double tr = (clover_site(field, geo, site, mu, nu) * clover_site(field, geo, site, rho, sigma)).trace().real();
-                        q_clover += levi_civita(mu, nu, rho, sigma) * tr;
-                    }
-                }
-            }
-        }
-    }
-    q_clover *= 1.0/(32 * M_PI * M_PI);
-    return q_clover;
+//Computes the local clover topological charge and energy at site
+std::pair<double,double> observables::local_q_e_clover(const GaugeField &field, const Geometry &geo, size_t site) {
+    SU3 F01 = clover_site(field, geo, site, 0, 1);
+    SU3 F02 = clover_site(field, geo, site, 0, 2);
+    SU3 F03 = clover_site(field, geo, site, 0, 3);
+    SU3 F12 = clover_site(field, geo, site, 1, 2);
+    SU3 F13 = clover_site(field, geo, site, 1, 3);
+    SU3 F23 = clover_site(field, geo, site, 2, 3);
+
+    // 2. On utilise la forme explicite de epsilon_{mu nu rho sigma}
+    // Q ~ Tr(F01*F23 - F02*F13 + F03*F12)
+    double q = (F01 * F23).trace().real() -
+               (F02 * F13).trace().real() +
+               (F03 * F12).trace().real();
+
+    //On calcule aussi l'énergie locale
+    double e_local = 0.5*(F01.squaredNorm() + F02.squaredNorm() + F03.squaredNorm() +
+                  F12.squaredNorm() + F13.squaredNorm() + F23.squaredNorm());
+    // 3. Le facteur global est 1/(4*pi^2) car le 1/32 a été absorbé
+    // par les combinaisons et le facteur 1/8 de F.
+    return {q * (1.0 / (4.0 * M_PI * M_PI)),e_local};
 }
 
-//Return the clover topological charge
-double observables::topo_charge_clover(const GaugeField &field, const Geometry &geo) {
+//Return the clover topological charge and energy density
+std::pair<double,double> observables::topo_q_e_clover(const GaugeField &field, const Geometry &geo) {
     double q = 0.0;
+    double e = 0.0;
     for (size_t site = 0; site < geo.V; site++) {
-        q += local_topo_charge_clover(field, geo, site);
+        auto local = local_q_e_clover(field, geo, site);
+        q += local.first;
+        e += local.second;
     }
-    return q;
+    return {q, e/static_cast<double>(geo.V)};
 }
 

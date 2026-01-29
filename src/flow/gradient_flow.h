@@ -20,6 +20,7 @@ public:
     void compute_force(int i);
     void compute_w1();
     void compute_w2();
+    void replace_force_0();
     void compute_w3();
     void rk3_step();
 };

@@ -101,7 +101,7 @@ std::vector<double> heatbath::samples(GaugeField &field, const Geometry &geo, co
         //Sample
         double p = observables::mean_plaquette(field, geo);
         std::cout << "Sample "<< m << ", <P> = " << p << " ";
-        std::cout << "Q = " << observables::topo_charge_clover(field, geo) << " ";
+        std::cout << "Q = " << observables::topo_q_e_clover(field, geo).first << " ";
         std::cout << "\n";
         meas[m] = p;
     }
