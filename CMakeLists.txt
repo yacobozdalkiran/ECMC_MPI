@@ -76,6 +76,8 @@ add_executable(gauge_single_core src/bin/gauge_single_core.cpp
         src/observables/observables.cpp
         src/io/io.cpp
         src/io/params.h
+        src/flow/gradient_flow.cpp
+        src/flow/gradient_flow.h
 )
 
 target_link_libraries(gauge_single_core PRIVATE Eigen3::Eigen lime)
@@ -104,6 +106,8 @@ add_executable(gauge_metropolis src/bin/gauge_metropolis.cpp
         src/observables/observables.cpp
         src/io/io.cpp
         src/io/params.h
+        src/flow/gradient_flow.cpp
+        src/flow/gradient_flow.h
 )
 
 target_link_libraries(gauge_metropolis PRIVATE Eigen3::Eigen lime)
@@ -133,6 +137,8 @@ add_executable(gauge_heatbath
         src/observables/observables.cpp
         src/io/io.cpp
         src/io/params.h
+        src/flow/gradient_flow.cpp
+        src/flow/gradient_flow.h
 )
 
 target_link_libraries(gauge_heatbath PRIVATE Eigen3::Eigen lime)

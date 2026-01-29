@@ -133,4 +133,9 @@ std::vector<SU3> ecmc_set(double epsilon, std::vector<SU3> &set, std::mt19937_64
     return set;
 }
 
-
+//Projects A on the lie algebra su(3) (traceless anti-hermitian)
+void proj_lie_su3(SU3 &A) {
+    SU3 B = (0.5 * (A - A.adjoint())).eval(); //To avoid aliasing
+    std::complex<double> tr_per_dim = B.trace() / 3.0;
+    A = B - tr_per_dim * SU3::Identity();
+}

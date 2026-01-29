@@ -39,4 +39,5 @@ inline int dsign(double x) {
     if (x<0) return -1;
     return 0;
 }
+void proj_lie_su3(SU3 &A);
 #endif //INC_4D_MPI_UTILS_H
