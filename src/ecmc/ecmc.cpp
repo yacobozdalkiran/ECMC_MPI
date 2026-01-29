@@ -344,7 +344,6 @@ std::vector<double> ecmc::samples_improved(GaugeField &field, const Geometry &ge
                 std::cout << "Sample " << samples << " ";
                 double plaq = observables::mean_plaquette(field, geo);
                 std::cout << "<P> = " << plaq << " "; // << static_cast<double>(lifts)/proposed * 100.0 << "% lifts " << std::endl;
-                std::cout << "Q = " << observables::topo_charge_clover(field, geo) << " ";
                 std::cout << "Updates : " << update_counter << " ";
                 std::cout << "\n";
                 //std::cout << "S = " << observables::wilson_action(field, geo) << std::endl;
@@ -397,7 +396,6 @@ std::vector<double> ecmc::samples_improved(GaugeField &field, const Geometry &ge
                 std::cout << "Sample " << samples << " ";
                 double plaq = observables::mean_plaquette(field, geo);
                 std::cout << "<P> = " << plaq << " "; // << static_cast<double>(lifts)/proposed * 100.0 << "% lifts " << std::endl;
-                std::cout << "Q = " << observables::topo_charge_clover(field, geo) << " ";
                 std::cout << "Updates : " << update_counter << " ";
                 std::cout << "\n";
                 //std::cout << "S = " << observables::wilson_action(field, geo) << std::endl;

@@ -199,7 +199,23 @@ add_executable(flow_test src/bin/flow_test.cpp
         src/observables/observables.cpp
         src/flow/gradient_flow.cpp
         src/heatbath/heatbath.cpp
+        src/ecmc/ecmc.cpp
         src/su3/utils.cpp)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+    target_compile_options(flow_test PRIVATE
+            -O2
+            #-xHost            # Remplace -march=native pour Intel
+            -fp-model precise
+            -Wall -Wextra
+    )
+else()
+    target_compile_options(flow_test PRIVATE
+            -O2
+            #-ffast-math
+            #-march=native
+            -Wall -Wextra -Wpedantic
+    )
+endif()
 
 target_link_libraries(flow_test PRIVATE Eigen3::Eigen)
