@@ -91,6 +91,7 @@ void heatbath::sweep(GaugeField &field, const Geometry &geo, double beta, int N_
     }
 }
 
+//Generates samples of the plaquette using heatbath
 std::vector<double> heatbath::samples(GaugeField &field, const Geometry &geo, const HbParams &params,
     std::mt19937_64 &rng) {
 	int precision = 6;
@@ -104,7 +105,7 @@ std::vector<double> heatbath::samples(GaugeField &field, const Geometry &geo, co
         double p = observables::mean_plaquette(field, geo);
         std::cout << "Sample "<< m << " :\n";
 	std::cout << "<P> = " << io::format_double(p, precision) << " ";
-        std::cout << "Q = " << io::format_double(observables::topo_q_e_clover(field, geo).first, precision) << " ";
+        //std::cout << "Q = " << io::format_double(observables::topo_q_e_clover(field, geo).first, precision) << " ";
         std::cout << "\n";
         meas[m] = p;
     }
