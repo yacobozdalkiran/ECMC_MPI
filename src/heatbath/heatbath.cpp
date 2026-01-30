@@ -5,6 +5,7 @@
 #include "heatbath.h"
 #include <iostream>
 
+#include "../io/io.h"
 #include "../observables/observables.h"
 
 //Generates a SU2 Heatbath candidate
@@ -92,6 +93,7 @@ void heatbath::sweep(GaugeField &field, const Geometry &geo, double beta, int N_
 
 std::vector<double> heatbath::samples(GaugeField &field, const Geometry &geo, const HbParams &params,
     std::mt19937_64 &rng) {
+	int precision = 6;
     std::vector<double> meas(params.N_samples);
     for (int m=0; m<params.N_samples; m++) {
         //Update
@@ -100,8 +102,9 @@ std::vector<double> heatbath::samples(GaugeField &field, const Geometry &geo, co
         }
         //Sample
         double p = observables::mean_plaquette(field, geo);
-        std::cout << "Sample "<< m << ", <P> = " << p << " ";
-        std::cout << "Q = " << observables::topo_q_e_clover(field, geo).first << " ";
+        std::cout << "Sample "<< m << " :\n";
+	std::cout << "<P> = " << io::format_double(p, precision) << " ";
+        std::cout << "Q = " << io::format_double(observables::topo_q_e_clover(field, geo).first, precision) << " ";
         std::cout << "\n";
         meas[m] = p;
     }
