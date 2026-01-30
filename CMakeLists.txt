@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(ECMC_MPI)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
@@ -200,6 +201,8 @@ add_executable(flow_test src/bin/flow_test.cpp
         src/flow/gradient_flow.cpp
         src/heatbath/heatbath.cpp
         src/ecmc/ecmc.cpp
+        src/io/io.cpp
+        src/io/params.h
         src/su3/utils.cpp)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
@@ -218,4 +221,4 @@ else()
     )
 endif()
 
-target_link_libraries(flow_test PRIVATE Eigen3::Eigen)
+target_link_libraries(flow_test PRIVATE Eigen3::Eigen lime)

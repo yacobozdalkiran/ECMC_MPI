@@ -5,6 +5,7 @@
 #include "ecmc.h"
 #include <iostream>
 
+#include "../io/io.h"
 #include "../observables/observables.h"
 #include "../su3/utils.h"
 
@@ -307,6 +308,7 @@ std::vector<double> ecmc::samples_improved(GaugeField &field, const Geometry &ge
 
     SU3 R = random_su3(rng);
 
+    int precision = 9; //Precision for samples printing
 
     int samples = 0;
     std::array<double,2> deltas = {0.0,0.0};
@@ -341,9 +343,9 @@ std::vector<double> ecmc::samples_improved(GaugeField &field, const Geometry &ge
                 theta_update = theta_sample - theta_parcouru_sample;
                 update(field, site_current, mu_current, theta_update, epsilon_current, R);
                 update_counter++;
-                std::cout << "Sample " << samples << " ";
+                std::cout << "Sample " << samples << " :\n";
                 double plaq = observables::mean_plaquette(field, geo);
-                std::cout << "<P> = " << plaq << " "; // << static_cast<double>(lifts)/proposed * 100.0 << "% lifts " << std::endl;
+                std::cout << "<P> = " << io::format_double(plaq, precision) << " "; // << static_cast<double>(lifts)/proposed * 100.0 << "% lifts " << std::endl;
                 std::cout << "Updates : " << update_counter << " ";
                 std::cout << "\n";
                 //std::cout << "S = " << observables::wilson_action(field, geo) << std::endl;
@@ -393,9 +395,9 @@ std::vector<double> ecmc::samples_improved(GaugeField &field, const Geometry &ge
                 update(field, site_current, mu_current, theta_update, epsilon_current, R);
                 update_counter++;
                 //On sample
-                std::cout << "Sample " << samples << " ";
+                std::cout << "Sample " << samples << " :\n";
                 double plaq = observables::mean_plaquette(field, geo);
-                std::cout << "<P> = " << plaq << " "; // << static_cast<double>(lifts)/proposed * 100.0 << "% lifts " << std::endl;
+                std::cout << "<P> = " << io::format_double(plaq, precision) << " "; // << static_cast<double>(lifts)/proposed * 100.0 << "% lifts " << std::endl;
                 std::cout << "Updates : " << update_counter << " ";
                 std::cout << "\n";
                 //std::cout << "S = " << observables::wilson_action(field, geo) << std::endl;

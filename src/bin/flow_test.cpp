@@ -19,14 +19,15 @@ void flow_charge(const GaugeField &field, const Geometry &geo, double eps) {
     int precision_tsqE = 3;
     int precision_t = 2;
     GradientFlow flow(eps, field, geo);
-    for (int i = 0; i<(2.5/0.02); i++) {
+    double tlim = 3.0;
+    for (int i = 0; i<(tlim+0.02)/0.02; i++) {
         flow.rk3_step();
     }
     auto qe = observables::topo_q_e_clover(flow.field_c, geo);
     std::cout
-    << "t = " << io::format_double(2.48, precision_t)
+    << "t = " << io::format_double(tlim, precision_t)
     << ", Q = " << io::format_double(qe.first, precision_Q)
-    << ", t^2*E = " << io::format_double(2.48*2.48*qe.second, precision_tsqE)
+    << ", t^2*E = " << io::format_double(pow(tlim,2)*qe.second, precision_tsqE)
     << ", P = " << io::format_double(observables::mean_plaquette(flow.field_c, geo), precision_Q)
     << "\n";
 }
@@ -44,16 +45,19 @@ int main() {
     GaugeField field(geo);
     field.hot_start(rng);
 
-    //Hb params and thermalisation
+    //ECMC params and thermalisation
     std::cout << "Thermalisation...\n";
-    ECMCParams ep{6.0, 500, 6050, 1000, false, 0.15};
-    ecmc::samples_improved(field, geo, ep, rng);
+    HbParams p{6.0, 100, 3, 1};
+    heatbath::samples(field, geo, p, rng);
 
     //Samples and Flow
-    int N = 10;
-    ep.N_samples = 100; //tau_int = 20 for the plaquette
+    int N = 5;
+    p.N_samples = 20; //tau_int = 2 for the plaquette
     for (int count = 0; count<N; count++) {
-        ecmc::samples_improved(field, geo, ep, rng);
-        flow_charge(field, geo, eps);
+        heatbath::samples(field, geo, p, rng);
+        if (count==4) flow_charge(field, geo, eps);
     }
+    std::string filename = "Q0.9";
+    io::ildg::save_ildg(field, geo, filename);
+    std::cout << field.view_link_const(0,0) << "\n";
 }
