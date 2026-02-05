@@ -106,7 +106,7 @@ GeometryCB::GeometryCB(int L_) {
                     neighbors[index_neigh(i, 3, down)] =
                         V + 2 * V_halo + index_halo_ecmc(c1, c2, c3 - 1);
 
-                i = index_w_halo(c1, c2, c3, L-1);
+                i = index_w_halo(c1, c2, c3, L - 1);
                 neighbors[index_neigh(i, 3, down)] = index(c1, c2, c3, L);
                 if (c1 + 1 < L)
                     neighbors[index_neigh(i, 0, up)] =
@@ -210,6 +210,28 @@ GeometryCB::GeometryCB(int L_) {
                 if (c3 - 1 >= 0)
                     neighbors[index_neigh(i, 2, down)] =
                         V + 7 * V_halo + index_halo_ecmc(c1, c2, c3 - 1);
+            }
+        }
+    }
+
+    frozen.resize((V + 8 * V_halo) * 4, false);
+    // Frozen links are those that step out of the lattice core
+    for (int t = -1; t <= L; t++) {
+        for (int z = -1; z <= L; z++) {
+            for (int y = -1; y <= L; y++) {
+                for (int x = 0; x <= L; x++) {
+                    bool link_is_frozen = false;
+                    if (x==-1 or y==-1 or z==-1 or t==-1) link_is_frozen = true;
+                    if (x==L or y==L or z==L or t==L) link_is_frozen = true;
+                    for (int mu =0; mu<4; mu++){
+                        if (x==L-1 and mu ==0) link_is_frozen = true;
+                        if (y==L-1 and mu ==1) link_is_frozen = true;
+                        if (z==L-1 and mu ==2) link_is_frozen = true;
+                        if (t==L-1 and mu ==3) link_is_frozen = true;
+                        size_t i = index_w_halo(x,y,z,t);
+                        frozen[index_frozen(i, mu)] = link_is_frozen;
+                    }
+                }
             }
         }
     }
