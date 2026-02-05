@@ -7,6 +7,11 @@
 
 #include <mpi.h>
 
+enum parity{
+    even,
+    odd
+};
+
 namespace mpi {
     class MpiTopology {
     public:
@@ -14,6 +19,7 @@ namespace mpi {
         int rank, size;
         int local_rank;
         int local_coords[4];
+        parity p;
         int x0, xL, y0, yL, z0, zL, t0, tL;
         MPI_Comm cart_comm{};
 

@@ -16,6 +16,7 @@ mpi::MpiTopology::MpiTopology(int n_core_dim_): local_coords{0,0,0,0} {
     MPI_Cart_create(MPI_COMM_WORLD, 4, dims, period, reorder, &cart_comm);
     MPI_Comm_rank(cart_comm, &local_rank);
     MPI_Cart_coords(cart_comm, local_rank, 4, local_coords);
+    p = ((local_coords[0] + local_coords[1] + local_coords[2] + local_coords[3])%2==0)? even : odd;
     MPI_Cart_shift(cart_comm, 0, 1, &x0, &xL);
     MPI_Cart_shift(cart_comm, 1, 1, &y0, &yL);
     MPI_Cart_shift(cart_comm, 2, 1, &z0, &zL);
