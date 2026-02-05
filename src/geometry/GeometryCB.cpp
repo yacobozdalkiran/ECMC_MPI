@@ -215,7 +215,7 @@ GeometryCB::GeometryCB(int L_) {
     }
 
     frozen.resize((V + 8 * V_halo) * 4, false);
-    // Frozen links are those that step out of the lattice core
+    // Frozen links are those that step out of the lattice core or belong to halos
     for (int t = -1; t <= L; t++) {
         for (int z = -1; z <= L; z++) {
             for (int y = -1; y <= L; y++) {
