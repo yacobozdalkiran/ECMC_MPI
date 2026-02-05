@@ -6,11 +6,8 @@
 #define ECMC_MPI_GEOMETRYHALOECMC_H
 
 #include <vector>
+#include "types.h"
 
-enum dir {
-    up,
-    down
-};
 
 class GeometryHaloECMC {
 

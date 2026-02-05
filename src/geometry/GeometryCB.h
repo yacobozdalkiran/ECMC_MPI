@@ -2,8 +2,7 @@
 #define GEOMETRYCB_H
 
 #include <vector>
-
-enum dir { up, down };
+#include "types.h"
 
 class GeometryCB {
 public:

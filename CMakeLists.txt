@@ -46,6 +46,8 @@ add_executable(gauge_ecmc_mpi src/bin/gauge_ecmc_mpi.cpp
         src/io/io.cpp
         src/io/params.h
         src/geometry/GeometryHaloECMC.cpp
+        src/geometry/types.h
+        src/mpi/types.h
 )
 
 
@@ -79,6 +81,8 @@ add_executable(gauge_single_core src/bin/gauge_single_core.cpp
         src/io/params.h
         src/flow/gradient_flow.cpp
         src/flow/gradient_flow.h
+        src/geometry/types.h
+        src/mpi/types.h
 )
 
 target_link_libraries(gauge_single_core PRIVATE Eigen3::Eigen lime)
@@ -109,6 +113,8 @@ add_executable(gauge_metropolis src/bin/gauge_metropolis.cpp
         src/io/params.h
         src/flow/gradient_flow.cpp
         src/flow/gradient_flow.h
+        src/geometry/types.h
+        src/mpi/types.h
 )
 
 target_link_libraries(gauge_metropolis PRIVATE Eigen3::Eigen lime)
@@ -140,6 +146,8 @@ add_executable(gauge_heatbath
         src/io/params.h
         src/flow/gradient_flow.cpp
         src/flow/gradient_flow.h
+        src/geometry/types.h
+        src/mpi/types.h
 )
 
 target_link_libraries(gauge_heatbath PRIVATE Eigen3::Eigen lime)
@@ -174,6 +182,8 @@ add_executable(gauge_heatbath_mpi src/bin/gauge_heatbath_mpi.cpp
         src/io/params.h
         src/geometry/GeometryHaloECMC.cpp
         src/heatbath/heatbath_mpi.cpp
+        src/geometry/types.h
+        src/mpi/types.h
 )
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
@@ -203,7 +213,10 @@ add_executable(flow_test src/bin/flow_test.cpp
         src/ecmc/ecmc.cpp
         src/io/io.cpp
         src/io/params.h
-        src/su3/utils.cpp)
+        src/su3/utils.cpp
+        src/geometry/types.h
+        src/mpi/types.h
+    )
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
     target_compile_options(flow_test PRIVATE

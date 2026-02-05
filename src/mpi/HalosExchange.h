@@ -8,6 +8,7 @@
 #include "../geometry/GeometryFrozen.h"
 #include "MpiTopology.h"
 #include "Halo.h"
+#include "HalosCB.h"
 #include "../io/params.h"
 
 
@@ -29,6 +30,12 @@ namespace mpi::ecmc {
     void exchange_halos_ecmc(const GeometryHaloECMC &geo, HaloECMC &halo, mpi::MpiTopology &topo);
     void fill_halo_field(GaugeField &field, const GeometryHaloECMC &geo, const HaloECMC &halo);
     void fill_and_exchange(GaugeField &field, const GeometryHaloECMC &geo, HaloECMC &halo, mpi::MpiTopology &topo);
+}
+
+namespace mpi::ecmccb {
+    void fill_halos_ecmc(const GaugeField &field, const GeometryCB &geo, HalosCB &halo);
+    void exchange_halos_ecmc(GaugeField &field, const GeometryCB &geo, const HalosCB &halo, mpi::MpiTopology &topo);
+    void fill_and_exchange(GaugeField &field, const GeometryCB &geo, HalosCB &halo, mpi::MpiTopology &topo);
 }
 
 #endif //INC_4D_MPI_HALOSEXCHANGE_H
