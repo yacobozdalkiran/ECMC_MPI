@@ -23,6 +23,7 @@ namespace mpi::shift {
 namespace mpi::observables {
     void fill_halo_obs_send(const GaugeField &field, const GeometryHaloECMC &geo, HaloObs &halo_obs);
     void exchange_halos_obs(HaloObs &halo_obs, mpi::MpiTopology &topo, MPI_Request* reqs);
+    void fill_halo_obs_send(const GaugeField &field, const GeometryCB &geo, HaloObs &halo_obs);
 }
 
 namespace mpi::ecmc {

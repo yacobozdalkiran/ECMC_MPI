@@ -540,6 +540,46 @@ void mpi::observables::exchange_halos_obs(HaloObs& halo_obs, mpi::MpiTopology& t
     // optimize data flux
 }
 
+
+// Fills the send buffers of halo_obs with the corresponding faces of the gauge field
+void mpi::observables::fill_halo_obs_send(const GaugeField& field, const GeometryCB &geo,
+                                          HaloObs& halo_obs) {
+    int L = geo.L;
+    for (int c3 = 0; c3 < L; c3++) {
+        for (int c2 = 0; c2 < L; c2++) {
+            for (int c1 = 0; c1 < L; c1++) {
+                size_t site_halo = halo_obs.index_halo_obs(c1, c2, c3);
+                size_t sitefx0 = geo.index(0, c1, c2, c3);
+                size_t sitefxL = geo.index(L - 1, c1, c2, c3);
+                size_t sitefy0 = geo.index(c1, 0, c2, c3);
+                size_t sitefyL = geo.index(c1, L - 1, c2, c3);
+                size_t sitefz0 = geo.index(c1, c2, 0, c3);
+                size_t sitefzL = geo.index(c1, c2, L - 1, c3);
+                size_t siteft0 = geo.index(c1, c2, c3, 0);
+                size_t siteftL = geo.index(c1, c2, c3, L - 1);
+                for (int mu = 0; mu < 4; mu++) {
+                    halo_obs.view_link_halo_obs(fx0, send, site_halo, mu) =
+                        field.view_link_const(sitefx0, mu);
+                    halo_obs.view_link_halo_obs(fxL, send, site_halo, mu) =
+                        field.view_link_const(sitefxL, mu);
+                    halo_obs.view_link_halo_obs(fy0, send, site_halo, mu) =
+                        field.view_link_const(sitefy0, mu);
+                    halo_obs.view_link_halo_obs(fyL, send, site_halo, mu) =
+                        field.view_link_const(sitefyL, mu);
+                    halo_obs.view_link_halo_obs(fz0, send, site_halo, mu) =
+                        field.view_link_const(sitefz0, mu);
+                    halo_obs.view_link_halo_obs(fzL, send, site_halo, mu) =
+                        field.view_link_const(sitefzL, mu);
+                    halo_obs.view_link_halo_obs(ft0, send, site_halo, mu) =
+                        field.view_link_const(siteft0, mu);
+                    halo_obs.view_link_halo_obs(ftL, send, site_halo, mu) =
+                        field.view_link_const(siteftL, mu);
+                }
+            }
+        }
+    }
+}
+
 // Fills the halos with links of coord 0
 void mpi::ecmc::fill_halos_ecmc(const GaugeField& field, const GeometryHaloECMC& geo,
                                 HaloECMC& halo) {

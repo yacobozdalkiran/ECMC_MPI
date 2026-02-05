@@ -274,6 +274,49 @@ public:
         }
         return view_link_halo_obs_const(f, recv, site_halo, mu);
     }
+
+    //Returns the link at (x,y,z,t,mu) taking into account the halos_obs
+    [[nodiscard]] SU3 get_link_with_halo_obs(const GaugeField &field, const GeometryCB &geo, int x, int y, int z, int t, int mu) const {
+        if (x>=0 && y>=0 && z>=0 && t>=0 && x<=L-1 && y<=L-1 && z<=L-1 && t<=L-1) {
+            size_t site = geo.index(x,y,z,t);
+            return field.view_link_const(site, mu);
+        }
+        size_t site_halo{};
+        face f{};
+        if (x==-1) {
+            site_halo = index_halo_obs(y,z,t);
+            f = fx0;
+        }
+        else if (y==-1) {
+            site_halo = index_halo_obs(x,z,t);
+            f = fy0;
+        }
+        else if (z==-1) {
+            site_halo = index_halo_obs(x,y,t);
+            f = fz0;
+        }
+        else if (t==-1) {
+            site_halo = index_halo_obs(x,y,z);
+            f = ft0;
+        }
+        else if (x ==L) {
+            site_halo = index_halo_obs(y,z,t);
+            f = fxL;
+        }
+        else if (y ==L) {
+            site_halo = index_halo_obs(x,z,t);
+            f = fyL;
+        }
+        else if (z ==L) {
+            site_halo = index_halo_obs(x,y,t);
+            f = fzL;
+        }
+        else if (t ==L) {
+            site_halo = index_halo_obs(x,y,z);
+            f = ftL;
+        }
+        return view_link_halo_obs_const(f, recv, site_halo, mu);
+    }
 };
 
 #endif //INC_4D_MPI_HALO_H
