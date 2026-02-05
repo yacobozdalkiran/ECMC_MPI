@@ -65,7 +65,7 @@ GeometryHaloECMC::GeometryHaloECMC(int L_) {
                 if (c3-1>=0) neighbors[index_neigh(i, 3, down)] = V + 2*V_halo +index_halo_ecmc(c1,c2,c3-1);
 
                 i = index_w_halo(c1, c2, c3, L);
-                neighbors[index_neigh(i,3,down)] = index(c1, c2, c3, L);
+                neighbors[index_neigh(i,3,down)] = index(c1, c2, c3, L-1);
                 if (c1+1<L) neighbors[index_neigh(i, 0, up)] = V+3*V_halo+index_halo_ecmc(c1+1,c2,c3);
                 if (c1-1>=0) neighbors[index_neigh(i, 0, down)] = V+3*V_halo +index_halo_ecmc(c1-1,c2,c3);
                 if (c2+1<L)  neighbors[index_neigh(i, 1, up)] = V+3*V_halo +index_halo_ecmc(c1,c2+1,c3);

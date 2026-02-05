@@ -6,7 +6,6 @@
 #define ECMC_MPI_GEOMETRYHALOECMC_H
 
 #include <vector>
-#include <iostream>
 
 enum dir {
     up,
