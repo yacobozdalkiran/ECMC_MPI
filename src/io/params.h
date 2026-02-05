@@ -43,6 +43,16 @@ struct RunParams {
     ECMCParams ecmc_params{};
 };
 
+struct RunParamsCB {
+    int L_core = 6;
+    int n_core_dims = 2;
+    bool cold_start = true;
+    int n_shift = 1; //number of shifts in all the directions
+    bool stype_pos=true; //Are the shifts positives ?
+    int seed = 123;
+    ECMCParams ecmc_params{}; //Params for each color update (total samples nb = N_samples*2*N_shift)
+};
+
 struct RunParamsSC {
     int L=4;
     int T=4;

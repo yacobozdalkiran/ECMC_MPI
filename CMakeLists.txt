@@ -235,3 +235,42 @@ else()
 endif()
 
 target_link_libraries(flow_test PRIVATE Eigen3::Eigen lime)
+
+
+add_executable(gauge_ecmc_cb src/bin/gauge_ecmc_cb.cpp
+        src/gauge/GaugeField.cpp
+        src/su3/utils.cpp
+        src/observables/observables_mpi.cpp
+        src/mpi/MpiTopology.cpp
+        src/mpi/HalosExchange.cpp
+        src/mpi/Halo.h
+        src/mpi/HalosCB.h
+        src/ecmc/ecmc_mpi_cb.cpp
+        src/io/io.cpp
+        src/io/params.h
+        src/geometry/GeometryCB.cpp
+        src/geometry/types.h
+        src/mpi/types.h
+)
+
+# Configuration des options selon le compilateur détecté
+if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+    # Options spécifiques à icpx (OneAPI)
+    target_compile_options(gauge_ecmc_cb PRIVATE
+            -O2
+            #-xHost            # Remplace -march=native pour Intel
+            -fp-model precise
+            -Wall -Wextra
+    )
+else()
+    target_compile_options(gauge_ecmc_cb PRIVATE
+            -O2
+            #-ffast-math
+            #-march=native
+            -Wall -Wextra -Wpedantic
+    )
+endif()
+
+target_link_libraries(gauge_ecmc_cb PRIVATE MPI::MPI_CXX Eigen3::Eigen lime)
+
+

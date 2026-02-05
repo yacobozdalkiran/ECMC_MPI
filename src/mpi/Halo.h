@@ -94,6 +94,13 @@ public:
         recv.resize(V_halo*4*9);
     }
 
+    explicit Halo(int L_shift_, const GeometryCB &geo) {
+        L_shift = L_shift_;
+        L = geo.L;
+        V_halo = L*L*L*L_shift;
+        send.resize(V_halo*4*9);
+        recv.resize(V_halo*4*9);
+    }
     //Index function for local coordinates x,y,z,t of halo send/recv
     [[nodiscard]] size_t index_halo(int x, int y, int z, int t, const ShiftParams &sp) const {
         size_t index{};
@@ -175,6 +182,27 @@ public:
         ftL_send.resize(L*L*L*9*4);
     }
 
+    explicit HaloObs(const GeometryCB &geo) {
+        L = geo.L;
+        V = L*L*L;
+        fx0_recv.resize(L*L*L*9*4);
+        fxL_recv.resize(L*L*L*9*4);
+        fy0_recv.resize(L*L*L*9*4);
+        fyL_recv.resize(L*L*L*9*4);
+        fz0_recv.resize(L*L*L*9*4);
+        fzL_recv.resize(L*L*L*9*4);
+        ft0_recv.resize(L*L*L*9*4);
+        ftL_recv.resize(L*L*L*9*4);
+
+        fx0_send.resize(L*L*L*9*4);
+        fxL_send.resize(L*L*L*9*4);
+        fy0_send.resize(L*L*L*9*4);
+        fyL_send.resize(L*L*L*9*4);
+        fz0_send.resize(L*L*L*9*4);
+        fzL_send.resize(L*L*L*9*4);
+        ft0_send.resize(L*L*L*9*4);
+        ftL_send.resize(L*L*L*9*4);
+    }
     //Returns the index of the site corresponding to (c1,c2,c3) with order x,y,z,t
     [[nodiscard]] size_t index_halo_obs(int c1, int c2, int c3) const {
         return (c3*L + c2)*L+c1;

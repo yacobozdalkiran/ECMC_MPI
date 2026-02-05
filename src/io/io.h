@@ -22,6 +22,7 @@ namespace io {
     //Input
     std::string trim(const std::string& s);
     void load_params(const std::string& filename, RunParams& rp);
+    void load_params(const std::string& filename, RunParamsCB& rp);
     void load_params(const std::string &filename, RunParamsSC& rp);
     void load_params(const std::string &filename, RunParamsMetro& rp);
     void load_params(const std::string &filename, RunParamsHb& rp);
