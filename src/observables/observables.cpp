@@ -3,6 +3,7 @@
 //
 
 #include "observables.h"
+#include <iostream> 
 
 
 //Returns the value of the mean plaquette of the gauge field

@@ -1,10 +1,12 @@
 //
+//
 // Created by ozdalkiran-l on 1/14/26.
 //
 
 #ifndef ECMC_MPI_IO_H
 #define ECMC_MPI_IO_H
 
+#include <iostream>
 #include <vector>
 #include <sstream>
 #include <iomanip>
