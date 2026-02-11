@@ -1,15 +1,13 @@
 #!/bin/bash
 
-#SBATCH --job-name=hot30k
+#SBATCH --job-name=ecmc_sc
 #SBATCH --output=%x.o
 #SBATCH --time=02:00:00
-#SBATCH --nodes=1
-#SBATCH --ntasks=16
-#SBATCH --ntasks-per-node=16
+#SBATCH --ntasks=1
 #SBATCH --partition=cpu_med
 
 #Source necessary modules
 source modules_load.sh
 
 # Run MPI script
-srun build/gauge_ecmc_mpi inputs/hot30k.txt
+srun --unbuffered build/gauge_single_core inputs/testsc.txt
