@@ -3,6 +3,6 @@ source modules_load.sh
 rm -rf build
 mkdir build
 cd build
-cmake .. -DCMAKE_C_COMPILER=icx -DCMAKE_CXX_COMPILER=icpx
+cM ffC
 make -j $(nproc)
 cd ..

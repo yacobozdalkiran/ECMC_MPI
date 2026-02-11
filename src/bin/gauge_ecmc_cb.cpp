@@ -107,37 +107,35 @@ void generate_fullshift(const RunParamsCB& run_params) {
 
         // Fill the halo for ECMC
         mpi::ecmccb::fill_and_exchange(field, geo, halocb, topo);
-        if (topo.p == even) {
-            plaquette[2 * gshiftc] =
-                mpi::ecmccb::samples_improved(field, geo, ecmc_params, rng, halo_obs, topo);
-        }
+        parity active_parity = even;
+        plaquette[2 * gshiftc] = mpi::ecmccb::samples_improved(field, geo, ecmc_params, rng,
+                                                               halo_obs, topo, active_parity);
+        active_parity = odd;
         mpi::ecmccb::fill_and_exchange(field, geo, halocb, topo);
-        if (topo.p == odd) {
-            plaquette[2 * gshiftc + 1] =
-                mpi::ecmccb::samples_improved(field, geo, ecmc_params, rng, halo_obs, topo);
-        }
-    }
+        plaquette[2 * gshiftc + 1] = mpi::ecmccb::samples_improved(field, geo, ecmc_params, rng,
+                                                                   halo_obs, topo, active_parity);
 
-    if (topo.rank == 0) {
-        // Flatten the plaquette vector
-        std::vector<double> plaquette_flat(2 * n_shift * N_samples);
-        for (int i = 0; i < 2 * n_shift; i++) {
-            for (int j = 0; j < N_samples; j++) {
-                plaquette_flat[i * N_samples + j] = plaquette[i][j];
+        if (topo.rank == 0) {
+            // Flatten the plaquette vector
+            std::vector<double> plaquette_flat(2 * n_shift * N_samples);
+            for (int i = 0; i < 2 * n_shift; i++) {
+                for (int j = 0; j < N_samples; j++) {
+                    plaquette_flat[i * N_samples + j] = plaquette[i][j];
+                }
             }
+            // Write the output
+            int precision_filename = 1;
+            std::string filename =
+                "EMCB_" + std::to_string(L * n_core_dims) + "b" +
+                io::format_double(ecmc_params.beta, precision_filename) + "Ns" +
+                std::to_string(run_params.n_shift) + "c" + std::to_string(run_params.cold_start) +
+                "ts" +
+                io::format_double(run_params.ecmc_params.param_theta_sample, precision_filename) +
+                "tr" +
+                io::format_double(run_params.ecmc_params.param_theta_refresh, precision_filename);
+            int precision = 10;
+            io::save_double(plaquette_flat, filename, precision);
         }
-        // Write the output
-        int precision_filename = 1;
-        std::string filename =
-            "EMCB_" + std::to_string(L * n_core_dims) + "b" +
-            io::format_double(ecmc_params.beta, precision_filename) + "Ns" +
-            std::to_string(run_params.n_shift) + "c" + std::to_string(run_params.cold_start) +
-            "ts" +
-            io::format_double(run_params.ecmc_params.param_theta_sample, precision_filename) +
-            "tr" +
-            io::format_double(run_params.ecmc_params.param_theta_refresh, precision_filename);
-        int precision = 10;
-        io::save_double(plaquette_flat, filename, precision);
     }
 }
 

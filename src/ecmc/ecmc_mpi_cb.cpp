@@ -262,7 +262,7 @@ size_t mpi::ecmccb::random_site(const GeometryCB& geo, std::mt19937_64& rng) {
 // Generates samples of global mean plaquette using ECMC with frozen BC
 std::vector<double> mpi::ecmccb::samples_improved(GaugeField& field, const GeometryCB& geo,
                                                 const ECMCParams& params, std::mt19937_64& rng,
-                                                HaloObs& halo_obs, mpi::MpiTopology& topo) {
+                                                HaloObs& halo_obs, mpi::MpiTopology& topo, parity active_parity) {
     double beta = params.beta;
     int N_samples = params.N_samples;
     double param_theta_sample = params.param_theta_sample;
@@ -349,7 +349,9 @@ std::vector<double> mpi::ecmccb::samples_improved(GaugeField& field, const Geome
             if (F == 0) {
                 // On sample
                 theta_update = theta_sample - theta_parcouru_sample;
+                if (topo.p == active_parity){
                 update(field, site_current, mu_current, theta_update, epsilon_current, R);
+                }
               // double plaq = mpi::observables::mean_plaquette_global(field, geo, halo_obs, topo);
               // if (topo.rank == 0) {
               //     std::cout << "Sample " << samples << ", ";
@@ -363,7 +365,9 @@ std::vector<double> mpi::ecmccb::samples_improved(GaugeField& field, const Geome
                 theta_parcouru_refresh += theta_update;
                 // On update jusqu'au refresh
                 theta_update = theta_refresh - theta_parcouru_refresh;
+                if (topo.p == active_parity){
                 update(field, site_current, mu_current, theta_update, epsilon_current, R);
+                }
                 theta_parcouru_sample += theta_update;
                 theta_parcouru_refresh = 0;
                 if (poisson)
@@ -379,7 +383,9 @@ std::vector<double> mpi::ecmccb::samples_improved(GaugeField& field, const Geome
             if (F == 1) {
                 // On update jusqu'au refresh
                 theta_update = theta_refresh - theta_parcouru_refresh;
+                if (topo.p == active_parity){
                 update(field, site_current, mu_current, theta_update, epsilon_current, R);
+                }
                 theta_parcouru_sample += theta_update;
                 theta_parcouru_refresh = 0;
                 if (poisson)
@@ -396,7 +402,9 @@ std::vector<double> mpi::ecmccb::samples_improved(GaugeField& field, const Geome
             if (F == 0) {
                 // On update jusqu'a theta_sample
                 theta_update = theta_sample - theta_parcouru_sample;
+                if (topo.p == active_parity){
                 update(field, site_current, mu_current, theta_update, epsilon_current, R);
+                }
                 // On sample
                //double plaq = mpi::observables::mean_plaquette_global(field, geo, halo_obs, topo);
                //if (topo.rank == 0) {
@@ -411,7 +419,9 @@ std::vector<double> mpi::ecmccb::samples_improved(GaugeField& field, const Geome
                 theta_parcouru_refresh += theta_update;
                 // On finit l'update et on lift
                 theta_update = -deltas[F];
+                if (topo.p == active_parity){
                 update(field, site_current, mu_current, theta_update, epsilon_current, R);
+                }
                 theta_parcouru_sample += theta_update;
                 theta_parcouru_refresh += theta_update;
                 // On lifte
@@ -426,7 +436,9 @@ std::vector<double> mpi::ecmccb::samples_improved(GaugeField& field, const Geome
             if (F == 1) {
                 // On update jusqu'à theta_refresh
                 theta_update = theta_refresh - theta_parcouru_refresh;
+                if (topo.p == active_parity){
                 update(field, site_current, mu_current, theta_update, epsilon_current, R);
+                }
                 theta_parcouru_sample += theta_update;
                 theta_parcouru_refresh = 0;
                 if (poisson)
@@ -442,7 +454,9 @@ std::vector<double> mpi::ecmccb::samples_improved(GaugeField& field, const Geome
         } else {
             // On update
             theta_update = reject_angles[j];
+                if (topo.p == active_parity){
             update(field, site_current, mu_current, theta_update, epsilon_current, R);
+                }
             theta_parcouru_sample += theta_update;
             theta_parcouru_refresh += theta_update;
             // On lift
