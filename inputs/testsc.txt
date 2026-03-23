@@ -5,7 +5,7 @@ seed = 12345
 
 beta=6.0
 N_samples=3000
-param_theta_sample=750
+param_theta_sample=1000
 param_theta_refresh=150
 poisson=false
-epsilon_set=0.15
+epsilon_set=0.1

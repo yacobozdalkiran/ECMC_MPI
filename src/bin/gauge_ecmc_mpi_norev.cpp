@@ -122,7 +122,8 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
             mpi::shift::random_shift(field, geo, halo_shift, topo, rng[0]);
             // New chain
             state.initialized = false;
-            mpi::ecmccb::sample_persistant(state, d, field, geo, ep, rng[0]);
+
+            mpi::ecmccb::sample_persistant_norev(state, d, field, geo, ep, rng[0]);
             mpi::exchange::exchange_halos_cascade(field, geo, topo);
 
             // Event counter reinitialized
@@ -160,11 +161,11 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
         // New chain
         state.initialized = false;
 
-        mpi::ecmccb::sample_persistant(state, d, field, geo, ep, rng[0]);
+        mpi::ecmccb::sample_persistant_norev(state, d, field, geo, ep, rng[0]);
         mpi::exchange::exchange_halos_cascade(field, geo, topo);
 
         // Plaquette measure
-        if ((i % rp.N_shift_plaquette == 0) and (i > 0 or !existing)) {
+        if ((i % rp.N_shift_plaquette == 0)) {
             double p = mpi::observables::mean_plaquette_global(field, geo, topo);
             if (topo.rank == 0) {
                 std::cout << "====== Plaquette ======\n";

@@ -2,23 +2,28 @@
 // Created by ozdalkiran-l on 1/14/26.
 //
 
-#include <fstream>
-#include <iostream>
+#include <omp.h>
+
 #include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
 #include <map>
-#include <string>
 #include <sstream>
+#include <string>
 extern "C" {
-    #include <lime.h>
+#include <lime.h>
 }
 #include "io.h"
 
 namespace fs = std::filesystem;
 
-//Saves a vector of doubles in ../data/filename.txt
-void io::save_double(const std::vector<double> &data, const std::string &filename, int precision) {
-    //Create a data folder if doesn't exists
-    fs::path dir("data");
+// Saves a vector of doubles in ../data/filename/filename_plaquette.txt
+void io::save_plaquette(const std::vector<double>& data, const std::string& filename,
+                        const std::string& dirpath, int precision) {
+    // Create a data folder if doesn't exists
+    fs::path base_dir(dirpath);
+    fs::path dir = base_dir / filename;
 
     try {
         if (!fs::exists(dir)) {
@@ -28,72 +33,340 @@ void io::save_double(const std::vector<double> &data, const std::string &filenam
         std::cerr << "Couldn't create folder data : " << e.what() << std::endl;
         return;
     }
-    fs::path filepath = dir/ (filename+".txt");
+    fs::path filepath = dir / (filename + "_plaquette.txt");
 
-    int counter = 1;
-    while (fs::exists(filepath)) {
-        //new name generation if file already exists
-        std::string new_name = filename + "_" + std::to_string(counter) + ".txt";
-        filepath = dir / new_name;
-        counter++;
-    }
-
-
-
-    std::ofstream file(filepath);
+    std::ofstream file(filepath, std::ios::out | std::ios::app);
     if (!file.is_open()) {
         std::cout << "Could not open file " << filepath << "\n";
         return;
     }
-    file << std::setprecision(precision);
-    for (const double &x : data) {
+    file << std::fixed << std::setprecision(precision);
+    for (const double& x : data) {
         file << x << "\n";
     }
     file.close();
-    std::cout << "\nData written in " << filepath << "\n";
+    std::cout << "Plaquette written in " << filepath << "\n";
 }
 
-//Saves a vector of doubles in ../data/filename and the run parameters in ../data/filename_params
-void io::save_double_params(const std::vector<double> &data, const RunParams &params, const std::string &filename,
-    int precision) {
-    io::save_double(data, filename, precision);
-    //No need to create data folder
-    fs::path dir("data");
+void io::save_event_nb(const std::vector<size_t>& event_nb, const std::string& filename,
+                       const std::string& dirpath) {
+    // Create a data folder if doesn't exists
+    fs::path base_dir(dirpath);
+    fs::path dir = base_dir / filename;
 
-    //We create the params file
-    std::string param_filename = filename + "_params.txt";
-    fs::path filepath = dir/param_filename;
-
-    int counter = 1;
-    while (fs::exists(filepath)) {
-        //new name generation if file already exists
-        std::string new_name = filename + "_" + std::to_string(counter) + "_params.txt";
-        filepath = dir / new_name;
-        counter++;
+    try {
+        if (!fs::exists(dir)) {
+            fs::create_directories(dir);
+        }
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "Couldn't create folder data : " << e.what() << std::endl;
+        return;
     }
+    fs::path filepath = dir / (filename + "_nbevent.txt");
+
+    std::ofstream file(filepath, std::ios::out | std::ios::app);
+    if (!file.is_open()) {
+        std::cout << "Could not open file " << filepath << "\n";
+        return;
+    }
+    for (const size_t& x : event_nb) {
+        file << x << "\n";
+    }
+    file.close();
+    std::cout << "Number of events written in " << filepath << "\n";
+}
+
+void io::save_event_nb(const std::vector<size_t>& event_nb, const std::vector<size_t>& lift_nb,
+                       const std::vector<size_t> rev_nb, const std::vector<double> lambda,
+                       const std::string& filename, const std::string& dirpath) {
+    // Create a data folder if doesn't exists
+    fs::path base_dir(dirpath);
+    fs::path dir = base_dir / filename;
+
+    try {
+        if (!fs::exists(dir)) {
+            fs::create_directories(dir);
+        }
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "Couldn't create folder data : " << e.what() << std::endl;
+        return;
+    }
+    fs::path filepath = dir / (filename + "_nbevent.txt");
+
+    std::ofstream file(filepath, std::ios::out | std::ios::app);
+    if (!file.is_open()) {
+        std::cout << "Could not open file " << filepath << "\n";
+        return;
+    }
+    for (size_t i = 0; i < event_nb.size(); i++) {
+        file << event_nb[i] << " " << lift_nb[i] << " " << rev_nb[i] << " " << lambda[i] << "\n";
+    }
+    file.close();
+    std::cout << "Number of events written in " << filepath << "\n";
+}
+
+// Saves the tQE vector into data/filename/filename_topo.txt
+void io::save_topo(const std::vector<double>& tQE, const std::string& filename,
+                   const std::string& dirpath, int precision) {
+    // Create a data folder if doesn't exists
+    fs::path base_dir(dirpath);
+    fs::path dir = base_dir / filename;
+
+    try {
+        if (!fs::exists(dir)) {
+            fs::create_directories(dir);
+        }
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "Couldn't create folder data : " << e.what() << std::endl;
+        return;
+    }
+    fs::path filepath = dir / (filename + "_topo.txt");
+
+    std::ofstream file(filepath, std::ios::out | std::ios::app);
+    if (!file.is_open()) {
+        std::cout << "Could not open file " << filepath << "\n";
+        return;
+    }
+    file << std::fixed << std::setprecision(precision);
+    for (size_t i = 0; i < tQE.size(); i += 3) {
+        file << tQE[i] << " " << tQE[i + 1] << " " << tQE[i + 2] << "\n";
+    }
+    file.close();
+    std::cout << "Topology written in " << filepath << "\n";
+};
+
+// Saves the Mersenne Twister states into dirpath/filename/filename_seed/filename_seed[rank].txt
+void io::save_seed(std::mt19937_64& rng, const std::string& filename, const std::string& dirpath,
+                   mpi::MpiTopology& topo) {
+    // Create a data folder if doesn't exists
+    fs::path base_dir(dirpath);
+    fs::path run_dir =
+        base_dir / filename /
+        (filename + "_seed");  // Utilise l'opérateur / pour gérer les slashs proprement
+
+    if (topo.rank == 0) {
+        try {
+            // create_directories crée dirpath PUIS "data/run_name" si nécessaire
+            if (!fs::exists(run_dir)) {
+                fs::create_directories(run_dir);
+            }
+        } catch (const fs::filesystem_error& e) {
+            std::cerr << "Error creating directory structure " << run_dir << " : " << e.what()
+                      << std::endl;
+            return;
+        }
+    }
+    MPI_Barrier(topo.cart_comm);
+    fs::path filepath = run_dir / (filename + "_seed" + std::to_string(topo.rank) + ".txt");
 
     std::ofstream file(filepath);
     if (!file.is_open()) {
         std::cout << "Could not open file " << filepath << "\n";
         return;
     }
-    //We write the run params
-    file << "L_tot: " << params.L_core*params.n_core_dims << "\n"
-            << "L_core: " << params.L_core << "\n"
-            << "n_core_dims: " << params.n_core_dims << "\n"
-            << "L_shift: " << params.L_shift << "\n"
-            << "n_shift: " << params.n_shift << "\n"
-            << "Seed: " << params.seed << "\n"
-            << "beta: " << params.ecmc_params.beta << "\n"
-            << "N_samples: " << params.ecmc_params.N_samples << "\n"
-            << "param_theta_sample: " << params.ecmc_params.param_theta_sample << "\n"
-            << "param_theta_refresh: " << params.ecmc_params.param_theta_refresh << "\n"
-            << "poisson: " << (params.ecmc_params.poisson ? "true" : "false") << "\n"
-            << "epsilon_set: " << params.ecmc_params.epsilon_set;
+    file << rng;
     file.close();
+    if (topo.rank == 0) {
+        std::cout << "Seed saved in " << filepath << "\n";
+    }
+};
+
+// Saves the Mersenne Twister states into
+// dirpath/filename/filename_seed/filename_seed_r[rank]_t[thread].txt
+void io::save_seed(std::vector<std::mt19937_64>& rng, const std::string& filename,
+                   const std::string& dirpath, mpi::MpiTopology& topo) {
+    // Create a data folder if doesn't exists
+    fs::path base_dir(dirpath);
+    fs::path run_dir =
+        base_dir / filename /
+        (filename + "_seed");  // Utilise l'opérateur / pour gérer les slashs proprement
+    if (topo.rank == 0) {
+        try {
+            // create_directories crée dirpath PUIS "data/run_name" si nécessaire_r
+            if (!fs::exists(run_dir)) {
+                fs::create_directories(run_dir);
+            }
+        } catch (const fs::filesystem_error& e) {
+            std::cerr << "Error creating directory structure " << run_dir << " : " << e.what()
+                      << std::endl;
+            return;
+        }
+    }
+    MPI_Barrier(topo.cart_comm);
+    for (size_t t = 0; t < rng.size(); ++t) {
+        // Nom de fichier incluant le rang (r) et le thread (t)
+        // Exemple : ma_run_seed_r0_t4.txt
+        std::string seed_name =
+            filename + "_seed_r" + std::to_string(topo.rank) + "_t" + std::to_string(t) + ".txt";
+        fs::path filepath = run_dir / seed_name;
+
+        std::ofstream file(filepath);
+        if (!file.is_open()) {
+            std::cerr << "Rank " << topo.rank << ": Could not open file " << filepath << "\n";
+            continue;  // On essaie quand même les autres threads
+        }
+
+        // On sérialise l'état interne du générateur
+        file << rng[t];
+        file.close();
+    }
+
+    // Un seul message pour confirmer que tout le groupe de seeds est sauvé
+    if (topo.rank == 0) {
+        std::cout << "All threads seeds (" << rng.size() << ") saved in " << run_dir << "\n";
+    }
+};
+
+// Saves the local chain state of each core in
+// dirpath/filename/filename_state/filename_state[rank].txt
+void io::save_state(const LocalChainState& state, const std::string& filename,
+                    const std::string& dirpath, mpi::MpiTopology& topo) {
+    // 1. Construction du chemin du dossier : dirpath/filename/filename_state/
+    fs::path base_dir = fs::path(dirpath) / filename;
+    fs::path state_dir = base_dir / (filename + "_state");
+
+    // 2. Création du dossier (le rang 0 s'en occupe)
+    if (topo.rank == 0) {
+        if (!fs::exists(state_dir)) {
+            fs::create_directories(state_dir);
+        }
+    }
+    // On s'assure que le dossier est prêt pour tout le monde
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    // 3. Fichier spécifique au rang : filename_state[rank].txt
+    std::string file_rank = filename + "_state" + std::to_string(topo.rank) + ".txt";
+    fs::path full_path = state_dir / file_rank;
+
+    std::ofstream ofs(full_path);
+    if (!ofs.is_open()) {
+        std::cerr << "[Rank " << topo.rank
+                  << "] Error: Could not open state file for writing: " << full_path << std::endl;
+        return;
+    }
+
+    // 4. Écriture des données avec précision maximale
+    ofs << std::setprecision(17);
+
+    // Scalaires
+    ofs << state.site << " " << state.mu << " " << state.epsilon << " "
+        << state.theta_parcouru_refresh_site << " " << state.theta_parcouru_refresh_R << " "
+        << state.theta_refresh_site << " " << state.theta_refresh_R << " " << state.set_counter
+        << " " << state.lift_counter << " " << state.rev_counter << " " << state.initialized
+        << "\n";
+
+    // Matrice SU3 R (3x3 nombres complexes)
+    // On sauvegarde la partie réelle et imaginaire de chaque composante
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            auto val = state.R(i, j);
+            ofs << val.real() << " " << val.imag() << " ";
+        }
+        ofs << "\n";
+    }
+
+    ofs.close();
+    if (topo.rank == 0) {
+        std::cout << "ECMC Chain saved in : " << full_path << std::endl;
+    }
 }
 
-//Utilitary function to trim the spaces
+// Loads the local chain state of each core
+void io::load_state(LocalChainState& state, const std::string& filename, const std::string& dirpath,
+                    mpi::MpiTopology& topo) {
+    // 1. Construction du chemin du fichier
+    fs::path state_path = fs::path(dirpath) / filename / (filename + "_state") /
+                          (filename + "_state" + std::to_string(topo.rank) + ".txt");
+
+    // 2. Tentative d'ouverture
+    std::ifstream ifs(state_path);
+    if (!ifs.is_open()) {
+        // Si le fichier n'existe pas, on considère que c'est un nouveau run
+        state.initialized = false;
+        return;
+    }
+
+    // 3. Lecture des scalaires
+    ifs >> state.site >> state.mu >> state.epsilon >> state.theta_parcouru_refresh_site >>
+        state.theta_parcouru_refresh_R >> state.theta_refresh_site >> state.theta_refresh_R >>
+        state.set_counter >> state.lift_counter >> state.rev_counter >> state.initialized;
+
+    // 4. Lecture de la matrice SU3 R
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            double re, im;
+            ifs >> re >> im;
+            // On reconstruit le complexe et on l'assigne à la matrice
+            state.R(i, j) = std::complex<double>(re, im);
+        }
+    }
+
+    ifs.close();
+
+    if (topo.rank == 0) {
+        std::cout << "Successfully loaded ECMC chain state from: " << state_path << std::endl;
+    }
+}
+
+// Saves the run params into data/filename/filename_params.txt
+void io::save_params(const RunParamsHbCB& rp, const std::string& filename,
+                     const std::string& dirpath) {
+    // Create a data/run_name folder if doesn't exists
+    fs::path base_dir(dirpath);
+    fs::path dir = base_dir / filename;
+
+    try {
+        if (!fs::exists(dir)) {
+            fs::create_directories(dir);
+        }
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "Couldn't create folder data : " << e.what() << std::endl;
+        return;
+    }
+    fs::path filepath = dir / (filename + "_params.txt");
+
+    std::ofstream file(filepath, std::ios::out | std::ios::app);
+    if (!file.is_open()) {
+        std::cout << "Could not open file " << filepath << "\n";
+        return;
+    }
+    file << std::boolalpha;
+
+    file << "\n#########################################################\n\n";
+
+    file << "# Lattice params\n";
+    file << "L_core=" << rp.L_core << "\n";
+    file << "n_core_dims=" << rp.n_core_dims << "\n";
+    file << "cold_start=" << rp.cold_start << "\n\n";
+
+    file << "# Run params\n";
+    file << "seed=" << rp.seed << "\n";
+    file << "N_shift_therm = " << rp.N_therm << "\n";
+    file << "N_shift =" << rp.N_shift << "\n";
+    file << "N_switch_eo=" << rp.N_switch_eo << "\n\n";
+
+    file << "# Heatbath params\n";
+    file << "beta = " << rp.hp.beta << "\n";
+    file << "N_sweeps = " << rp.hp.N_sweeps << "\n";
+    file << "N_hits = " << rp.hp.N_hits << "\n\n";
+
+    file << "# Plaquette params\n";
+    file << "N_shift_plaquette = " << rp.N_shift_plaquette << "\n\n";
+
+    file << "# Topo params\n";
+    file << "topo = " << rp.topo << "\n";
+    file << "N_shift_topo = " << rp.N_shift_topo << "\n";
+    file << "N_steps_gf = " << rp.N_steps_gf << "\n";
+    file << "N_rk_steps = " << rp.N_rk_steps << "\n\n";
+
+    file << "#Save params\n";
+    file << "save_each_shifts = " << rp.save_each_shifts << "\n\n";
+
+    file.close();
+    std::cout << "Parameters saved in " << filepath << "\n";
+};
+
+// Utilitary function to trim the spaces
 std::string io::trim(const std::string& s) {
     size_t first = s.find_first_not_of(" \t");
     if (first == std::string::npos) return "";
@@ -101,8 +374,8 @@ std::string io::trim(const std::string& s) {
     return s.substr(first, (last - first + 1));
 }
 
-//Loads the parameters contained in filename into RunParams rp
-void io::load_params(const std::string& filename, RunParams& rp) {
+// Loads the params contained in filename into rp
+void io::load_params(const std::string& filename, RunParamsECB& rp) {
     std::ifstream file(filename);
     if (!file.is_open()) throw std::runtime_error("Impossible d'ouvrir " + filename);
 
@@ -110,7 +383,7 @@ void io::load_params(const std::string& filename, RunParams& rp) {
     std::string line;
 
     while (std::getline(file, line)) {
-        //Ignore comments and empty lines
+        // Ignore comments and empty lines
         if (line.empty() || line[0] == '#') continue;
 
         std::istringstream is_line(line);
@@ -120,34 +393,53 @@ void io::load_params(const std::string& filename, RunParams& rp) {
         }
     }
 
-    //Lattice params
-    if (config.count("L_core"))      rp.L_core = std::stoi(config["L_core"]);
+    // Lattice params
+    if (config.count("L_core")) rp.L_core = std::stoi(config["L_core"]);
     if (config.count("n_core_dims")) rp.n_core_dims = std::stoi(config["n_core_dims"]);
-    if (config.count("cold_start"))  rp.cold_start = (config["cold_start"] == "true");
-    if (config.count("L_shift"))     rp.L_shift = std::stoi(config["L_shift"]);
-    if (config.count("n_shift"))     rp.n_shift = std::stoi(config["n_shift"]);
-    if (config.count("stype_pos"))   rp.stype_pos = (config["stype_pos"] == "true");
-    if (config.count("seed"))      rp.seed= std::stoi(config["seed"]);
+    if (config.count("cold_start")) rp.cold_start = (config["cold_start"] == "true");
+    if (config.count("seed")) rp.seed = std::stoi(config["seed"]);
+    if (config.count("N_switch_eo")) rp.N_switch_eo = std::stoi(config["N_switch_eo"]);
+    if (config.count("N_shift")) rp.N_shift = std::stoi(config["N_shift"]);
 
-    //ECMC params
-    if (config.count("beta"))                rp.ecmc_params.beta = std::stod(config["beta"]);
-    if (config.count("N_samples"))           rp.ecmc_params.N_samples = std::stoi(config["N_samples"]);
-    if (config.count("param_theta_sample"))  rp.ecmc_params.param_theta_sample = std::stod(config["param_theta_sample"]);
-    if (config.count("param_theta_refresh")) rp.ecmc_params.param_theta_refresh = std::stod(config["param_theta_refresh"]);
-    if (config.count("poisson"))             rp.ecmc_params.poisson = (config["poisson"] == "true");
-    if (config.count("epsilon_set"))         rp.ecmc_params.epsilon_set = std::stod(config["epsilon_set"]);
+    // ECMC params
+    if (config.count("beta")) rp.ecmc_params.beta = std::stod(config["beta"]);
+    // 1 sample each run bc frozen links increase artificially the correlation
+    rp.ecmc_params.N_samples = 1;
+    if (config.count("param_theta_sample"))
+        rp.ecmc_params.param_theta_sample = std::stod(config["param_theta_sample"]);
+    if (config.count("param_theta_refresh_site"))
+        rp.ecmc_params.param_theta_refresh_site = std::stod(config["param_theta_refresh_site"]);
+    if (config.count("param_theta_refresh_R"))
+        rp.ecmc_params.param_theta_refresh_R = std::stod(config["param_theta_refresh_R"]);
+    if (config.count("poisson")) rp.ecmc_params.poisson = (config["poisson"] == "true");
+    if (config.count("epsilon_set")) rp.ecmc_params.epsilon_set = std::stod(config["epsilon_set"]);
+
+    if (config.count("N_shift_plaquette"))
+        rp.N_shift_plaquette = std::stoi(config["N_shift_plaquette"]);
+    // Run and topo params
+    if (config.count("N_shift_therm")) rp.N_therm = std::stoi(config["N_shift_therm"]);
+    if (config.count("topo")) rp.topo = (config["topo"] == "true");
+    if (config.count("N_shift_topo")) rp.N_shift_topo = std::stoi(config["N_shift_topo"]);
+    if (config.count("N_steps_gf")) rp.N_steps_gf = std::stoi(config["N_steps_gf"]);
+    if (config.count("N_rk_steps")) rp.N_rk_steps = std::stoi(config["N_rk_steps"]);
+    //
+    // Run name
+    if (config.count("run_name")) rp.run_name = config["run_name"];
+    if (config.count("run_dir")) rp.run_dir = config["run_dir"];
+    if (config.count("save_each_shifts"))
+        rp.save_each_shifts = std::stoi(config["save_each_shifts"]);
 }
 
-//Loads the parameters contained in filename into RunParams rp
-void io::load_params(const std::string& filename, RunParamsCB& rp) {
+// Loads the params contained in filename into rp
+void io::load_params(const std::string& filename, RunParamsHbCB& rp) {
     std::ifstream file(filename);
-    if (!file.is_open()) throw std::runtime_error("Impossible d'ouvrir " + filename);
+    if (!file.is_open()) throw std::runtime_error("Can't open file " + filename);
 
     std::map<std::string, std::string> config;
     std::string line;
 
     while (std::getline(file, line)) {
-        //Ignore comments and empty lines
+        // Ignore comments and empty lines
         if (line.empty() || line[0] == '#') continue;
 
         std::istringstream is_line(line);
@@ -157,177 +449,236 @@ void io::load_params(const std::string& filename, RunParamsCB& rp) {
         }
     }
 
-    //Lattice params
-    if (config.count("L_core"))      rp.L_core = std::stoi(config["L_core"]);
+    // Lattice params
+    if (config.count("L_core")) rp.L_core = std::stoi(config["L_core"]);
     if (config.count("n_core_dims")) rp.n_core_dims = std::stoi(config["n_core_dims"]);
-    if (config.count("cold_start"))  rp.cold_start = (config["cold_start"] == "true");
-    if (config.count("n_shift"))     rp.n_shift = std::stoi(config["n_shift"]);
-    if (config.count("stype_pos"))   rp.stype_pos = (config["stype_pos"] == "true");
-    if (config.count("seed"))      rp.seed= std::stoi(config["seed"]);
+    if (config.count("cold_start")) rp.cold_start = (config["cold_start"] == "true");
+    if (config.count("seed")) rp.seed = std::stoi(config["seed"]);
+    if (config.count("N_switch_eo")) rp.N_switch_eo = std::stoi(config["N_switch_eo"]);
+    if (config.count("N_shift")) rp.N_shift = std::stoi(config["N_shift"]);
 
-    //ECMC params
-    if (config.count("beta"))                rp.ecmc_params.beta = std::stod(config["beta"]);
-    if (config.count("N_samples"))           rp.ecmc_params.N_samples = std::stoi(config["N_samples"]);
-    if (config.count("param_theta_sample"))  rp.ecmc_params.param_theta_sample = std::stod(config["param_theta_sample"]);
-    if (config.count("param_theta_refresh")) rp.ecmc_params.param_theta_refresh = std::stod(config["param_theta_refresh"]);
-    if (config.count("poisson"))             rp.ecmc_params.poisson = (config["poisson"] == "true");
-    if (config.count("epsilon_set"))         rp.ecmc_params.epsilon_set = std::stod(config["epsilon_set"]);
+    // Hb params
+    if (config.count("beta")) rp.hp.beta = std::stod(config["beta"]);
+    // 1 sample bc frozen links increase artificially the correlation
+    rp.hp.N_samples = 1;
+    if (config.count("N_sweeps")) rp.hp.N_sweeps = std::stoi(config["N_sweeps"]);
+    if (config.count("N_hits")) rp.hp.N_hits = std::stoi(config["N_hits"]);
+    if (config.count("N_shift_plaquette"))
+        rp.N_shift_plaquette = std::stoi(config["N_shift_plaquette"]);
+
+    // Run and topo params
+    if (config.count("N_shift_therm")) rp.N_therm = std::stoi(config["N_shift_therm"]);
+    if (config.count("topo")) rp.topo = (config["topo"] == "true");
+    if (config.count("N_shift_topo")) rp.N_shift_topo = std::stoi(config["N_shift_topo"]);
+    if (config.count("N_steps_gf")) rp.N_steps_gf = std::stoi(config["N_steps_gf"]);
+    if (config.count("N_rk_steps")) rp.N_rk_steps = std::stoi(config["N_rk_steps"]);
+
+    // Run name
+    if (config.count("run_name")) rp.run_name = config["run_name"];
+    if (config.count("run_dir")) rp.run_dir = config["run_dir"];
+    if (config.count("save_each_shifts"))
+        rp.save_each_shifts = std::stoi(config["save_each_shifts"]);
 }
-//Loads the parameters for single core generation in filename into RunParamsSC rp
-void io::load_params(const std::string &filename, RunParamsSC &rp) {
-    std::ifstream file(filename);
-    if (!file.is_open()) throw std::runtime_error("Can't open file " + filename);
 
-    std::map<std::string, std::string> config;
-    std::string line;
+// Print parameters of the run
+void print_parameters(const RunParamsHbCB& rp, const mpi::MpiTopology& topo) {
+    if (topo.rank == 0) {
+        std::cout << "==========================================" << std::endl;
+        std::cout << "Heatbath - Checkboard" << std::endl;
+        std::cout << "==========================================" << std::endl;
+        std::cout << "Run name : " + rp.run_name << "\n";
+        std::cout << "---Lattice params---\n";
+        std::cout << "Total lattice size : " << rp.L_core * rp.n_core_dims << "^4\n";
+        std::cout << "Local lattice size : " << rp.L_core << "^4\n\n";
 
-    while (std::getline(file, line)) {
-        //Ignore comments and empty lines
-        if (line.empty() || line[0] == '#') continue;
+        std::cout << "---Run params---\n";
+        std::cout << "Initial seed : " << rp.seed << "\n";
+        std::cout << "Thermalization shifts : " << rp.N_therm << "\n";
+        std::cout << "Number of shifts : " << rp.N_shift << "\n";
+        std::cout << "Number of e/o switchs per shift : " << rp.N_switch_eo << "\n";
+        std::cout << "Save each : " << rp.save_each_shifts << " shifts\n\n";
 
-        std::istringstream is_line(line);
-        std::string key, value;
-        if (std::getline(is_line, key, '=') && std::getline(is_line, value)) {
-            config[trim(key)] = trim(value);
+        std::cout << "---Heatbath params---\n";
+        std::cout << "Beta : " << rp.hp.beta << "\n";
+        std::cout << "Number of sweeps : " << rp.hp.N_sweeps << "\n";
+        std::cout << "Number of hits : " << rp.hp.N_hits << "\n\n";
+
+        std::cout << "---Measures params---\n";
+        std::cout << "Number of <P> samples : " << rp.N_shift / rp.N_shift_plaquette << "\n";
+        std::cout << "Measure <P> each : " << rp.N_shift_plaquette << " shifts\n";
+        std::cout << "Measure topo : " << (rp.topo ? "Yes" : "No") << "\n";
+        if (rp.topo) {
+            std::cout << "Number of Q samples : " << rp.N_shift / rp.N_shift_topo << "\n";
+            std::cout << "Measure Q each : " << rp.N_shift_topo << " shifts\n\n";
+            std::cout << "---Gradient Flow---\n";
+            std::cout << "Number of RK3 steps per GF step : " << rp.N_rk_steps << "\n";
+            std::cout << "Number of GF steps : " << rp.N_steps_gf << "\n";
+        }
+        std::cout << "==========================================" << std::endl;
+    }
+}
+
+// Print time
+void print_time(long elapsed) {
+    std::cout << "==========================================" << std::endl;
+    std::cout << "Elapsed time : " << elapsed << "s\n";
+    std::cout << "==========================================" << std::endl;
+}
+
+// to_string for double with a fixed precision
+std::string io::format_double(double val, int precision) {
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(precision) << val;
+    return ss.str();
+}
+
+// Reads the parameters of input file into RunParams struct
+// Returns true if the necessary files are found
+bool io::read_params(RunParamsHbCB& params, int rank, const std::string& input) {
+    if (rank == 0) {
+        try {
+            io::load_params(input, params);
+        } catch (const std::exception& e) {
+            std::cerr << "Error reading input : " << e.what() << std::endl;
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
+    }
+    // 1. Diffusion des paramètres numériques (Lattice + Run + Topo)
+    // On diffuse les blocs un par un pour plus de clarté et de sécurité
+    MPI_Bcast(&params.L_core, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.n_core_dims, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.cold_start, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_switch_eo, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_shift, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.seed, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_therm, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.topo, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_shift_topo, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_shift_plaquette, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_steps_gf, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_rk_steps, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.save_each_shifts, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    MPI_Bcast(&params.hp.beta, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.hp.N_samples, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.hp.N_hits, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.hp.N_sweeps, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.hp.N_therm, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    // 3. Diffusion de la std::string (run_name)
+    int name_len;
+    if (rank == 0) {
+        name_len = static_cast<int>(params.run_name.size());
+    }
+
+    // On envoie d'abord la taille de la string
+    MPI_Bcast(&name_len, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    // Les autres ranks préparent leur mémoire
+    if (rank != 0) {
+        params.run_name.resize(name_len);
+    }
+
+    // On envoie le contenu de la string (le buffer interne)
+    if (name_len > 0) {
+        MPI_Bcast(&params.run_name[0], name_len, MPI_CHAR, 0, MPI_COMM_WORLD);
+    }
+    // 3. Diffusion de la std::string (run_dir)
+    int dir_len;
+    if (rank == 0) {
+        dir_len = static_cast<int>(params.run_dir.size());
+    }
+
+    // On envoie d'abord la taille de la string
+    MPI_Bcast(&dir_len, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    // Les autres ranks préparent leur mémoire
+    if (rank != 0) {
+        params.run_dir.resize(dir_len);
+    }
+
+    // On envoie le contenu de la string (le buffer interne)
+    if (dir_len > 0) {
+        MPI_Bcast(&params.run_dir[0], dir_len, MPI_CHAR, 0, MPI_COMM_WORLD);
+    }
+
+    // 4. Vérification de l'existence des fichiers pour la reprise (Resume)
+    fs::path base_path = fs::path(params.run_dir) / params.run_name;
+    fs::path config_file = base_path / params.run_name;  // Le fichier ILDG
+    fs::path seed_dir = base_path / (params.run_name + "_seed");
+
+    // 1. On vérifie d'abord si le fichier de configuration global existe
+    bool local_existing = fs::exists(config_file);
+
+    // 2. On vérifie que TOUS les fichiers de seeds pour ce rang existent
+    int n_threads = omp_get_max_threads();
+    for (int t = 0; t < n_threads; ++t) {
+        std::string seed_name =
+            params.run_name + "_seed_r" + std::to_string(rank) + "_t" + std::to_string(t) + ".txt";
+        fs::path seed_file = seed_dir / seed_name;
+
+        if (!fs::exists(seed_file)) {
+            local_existing = false;
+            break;  // Inutile de vérifier les autres si un seul manque
         }
     }
 
-    //Lattice params
-    if (config.count("L"))           rp.L = std::stoi(config["L"]);
-    if (config.count("T"))           rp.T = std::stoi(config["T"]);
-    if (config.count("cold_start"))  rp.cold_start = (config["cold_start"] == "true");
-    if (config.count("seed"))  rp.seed = std::stoi(config["seed"]);
-
-
-    //ECMC params
-    if (config.count("beta"))                rp.ecmc_params.beta = std::stod(config["beta"]);
-    if (config.count("N_samples"))           rp.ecmc_params.N_samples = std::stoi(config["N_samples"]);
-    if (config.count("param_theta_sample"))  rp.ecmc_params.param_theta_sample = std::stod(config["param_theta_sample"]);
-    if (config.count("param_theta_refresh")) rp.ecmc_params.param_theta_refresh = std::stod(config["param_theta_refresh"]);
-    if (config.count("poisson"))             rp.ecmc_params.poisson = (config["poisson"] == "true");
-    if (config.count("epsilon_set"))         rp.ecmc_params.epsilon_set = std::stod(config["epsilon_set"]);
-}
-
-//Loads the parameters for Metropolis generations from input file
-void io::load_params(const std::string &filename, RunParamsMetro &rp) {
-    std::ifstream file(filename);
-    if (!file.is_open()) throw std::runtime_error("Can't open file " + filename);
-
-    std::map<std::string, std::string> config;
-    std::string line;
-
-    while (std::getline(file, line)) {
-        //Ignore comments and empty lines
-        if (line.empty() || line[0] == '#') continue;
-
-        std::istringstream is_line(line);
-        std::string key, value;
-        if (std::getline(is_line, key, '=') && std::getline(is_line, value)) {
-            config[trim(key)] = trim(value);
-        }
+    bool global_existing;
+    MPI_Allreduce(&local_existing, &global_existing, 1, MPI_C_BOOL, MPI_LAND, MPI_COMM_WORLD);
+    if (global_existing) {
+        if (rank == 0) std::cout << "All ranks found existing configuration. Resuming...\n";
+        return true;
+    } else {
+        return false;
     }
-
-    //Lattice params
-    if (config.count("L"))           rp.L = std::stoi(config["L"]);
-    if (config.count("T"))           rp.T = std::stoi(config["T"]);
-    if (config.count("cold_start"))  rp.cold_start = (config["cold_start"] == "true");
-    if (config.count("seed"))  rp.seed = std::stoi(config["seed"]);
-
-    //Metropolis params
-    if (config.count("beta"))                rp.mp.beta = std::stod(config["beta"]);
-    if (config.count("epsilon"))         rp.mp.epsilon= std::stod(config["epsilon"]);
-    if (config.count("N_samples"))           rp.mp.N_samples = std::stoi(config["N_samples"]);
-    if (config.count("N_sweeps_meas"))           rp.mp.N_sweeps_meas = std::stoi(config["N_sweeps_meas"]);
-    if (config.count("N_hits"))           rp.mp.N_hits = std::stoi(config["N_hits"]);
-    if (config.count("N_burnin"))           rp.mp.N_burnin= std::stoi(config["N_burnin"]);
-    if (config.count("N_set"))           rp.mp.N_set= std::stoi(config["N_set"]);
 }
 
-void io::load_params(const std::string &filename, RunParamsHb &rp) {
-    std::ifstream file(filename);
-    if (!file.is_open()) throw std::runtime_error("Can't open file " + filename);
+void print_parameters(const RunParamsECB& rp, const mpi::MpiTopology& topo) {
+    if (topo.rank == 0) {
+        std::cout << "==========================================" << std::endl;
+        std::cout << "ECMC - Checkboard" << std::endl;
+        std::cout << "==========================================" << std::endl;
+        std::cout << "Run name : " + rp.run_name << "\n";
+        std::cout << "---Lattice params---\n";
+        std::cout << "Total lattice size : " << rp.L_core * rp.n_core_dims << "^4\n";
+        std::cout << "Local lattice size : " << rp.L_core << "^4\n\n";
 
-    std::map<std::string, std::string> config;
-    std::string line;
+        std::cout << "---Run params---\n";
+        std::cout << "Initial seed : " << rp.seed << "\n";
+        std::cout << "Thermalization shifts : " << rp.N_therm << "\n";
+        std::cout << "Number of shifts : " << rp.N_shift << "\n";
+        std::cout << "Number of e/o switchs per shift : " << rp.N_switch_eo << "\n";
+        std::cout << "Save each : " << rp.save_each_shifts << " shifts\n\n";
 
-    while (std::getline(file, line)) {
-        //Ignore comments and empty lines
-        if (line.empty() || line[0] == '#') continue;
+        std::cout << "---ECMC params---\n";
+        std::cout << "Beta : " << rp.ecmc_params.beta << "\n";
+        std::cout << "Theta sample : " << rp.ecmc_params.param_theta_sample << "\n";
+        std::cout << "Theta refresh site : " << rp.ecmc_params.param_theta_refresh_site << "\n";
+        std::cout << "Theta refresh R : " << rp.ecmc_params.param_theta_refresh_R << "\n";
+        std::cout << "Epsilon set : " << rp.ecmc_params.epsilon_set << "\n";
+        std::cout << "Poisson law : " << (rp.ecmc_params.poisson ? "Yes" : "No") << "\n\n";
 
-        std::istringstream is_line(line);
-        std::string key, value;
-        if (std::getline(is_line, key, '=') && std::getline(is_line, value)) {
-            config[trim(key)] = trim(value);
+        std::cout << "---Measures params---\n";
+        std::cout << "Number of <P> samples : " << rp.N_shift / rp.N_shift_plaquette << "\n";
+        std::cout << "Measure <P> each : " << rp.N_shift_plaquette << " shifts\n";
+        std::cout << "Measure topo : " << (rp.topo ? "Yes" : "No") << "\n";
+        if (rp.topo) {
+            std::cout << "Number of Q samples : " << rp.N_shift / rp.N_shift_topo << "\n";
+            std::cout << "Measure Q each : " << rp.N_shift_topo << " shifts\n\n";
+            std::cout << "---Gradient Flow---\n";
+            std::cout << "Number of RK3 steps per GF step : " << rp.N_rk_steps << "\n";
+            std::cout << "Number of GF steps : " << rp.N_steps_gf << "\n";
         }
+        std::cout << "==========================================" << std::endl;
     }
-
-    //Lattice params
-    if (config.count("L"))           rp.L = std::stoi(config["L"]);
-    if (config.count("T"))           rp.T = std::stoi(config["T"]);
-    if (config.count("cold_start"))  rp.cold_start = (config["cold_start"] == "true");
-    if (config.count("seed"))  rp.seed = std::stoi(config["seed"]);
-
-    //Hb params
-    if (config.count("beta"))                rp.hp.beta = std::stod(config["beta"]);
-    if (config.count("N_samples"))           rp.hp.N_samples = std::stoi(config["N_samples"]);
-    if (config.count("N_sweeps"))           rp.hp.N_sweeps = std::stoi(config["N_sweeps"]);
-    if (config.count("N_hits"))           rp.hp.N_hits = std::stoi(config["N_hits"]);
 }
 
-void io::load_params(const std::string &filename, RunParamsHbMPI &rp) {
-    std::ifstream file(filename);
-    if (!file.is_open()) throw std::runtime_error("Can't open file " + filename);
+void io::save_params(const RunParamsECB& rp, const std::string& filename,
+                     const std::string& dirpath) {
+    // Create a data folder if doesn't exists
+    fs::path base_dir(dirpath);
+    fs::path dir = base_dir / filename;
 
-    std::map<std::string, std::string> config;
-    std::string line;
-
-    while (std::getline(file, line)) {
-        //Ignore comments and empty lines
-        if (line.empty() || line[0] == '#') continue;
-
-        std::istringstream is_line(line);
-        std::string key, value;
-        if (std::getline(is_line, key, '=') && std::getline(is_line, value)) {
-            config[trim(key)] = trim(value);
-        }
-    }
-
-    //Lattice params
-    if (config.count("L_core"))      rp.L_core = std::stoi(config["L_core"]);
-    if (config.count("n_core_dims")) rp.n_core_dims = std::stoi(config["n_core_dims"]);
-    if (config.count("cold_start"))  rp.cold_start = (config["cold_start"] == "true");
-    if (config.count("L_shift"))     rp.L_shift = std::stoi(config["L_shift"]);
-    if (config.count("n_shift"))     rp.n_shift = std::stoi(config["n_shift"]);
-    if (config.count("stype_pos"))   rp.stype_pos = (config["stype_pos"] == "true");
-    if (config.count("seed"))      rp.seed= std::stoi(config["seed"]);
-
-    //Hb params
-    if (config.count("beta"))                rp.hp.beta = std::stod(config["beta"]);
-    if (config.count("N_samples"))           rp.hp.N_samples = std::stoi(config["N_samples"]);
-    if (config.count("N_sweeps"))           rp.hp.N_sweeps = std::stoi(config["N_sweeps"]);
-    if (config.count("N_hits"))           rp.hp.N_hits = std::stoi(config["N_hits"]);
-}
-
-std::string io::ildg::generate_ildg_xml(int lx, int ly, int lz, int lt, int precision) {
-    std::ostringstream oss;
-    oss << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-        << "<ildgFormat xmlns=\"http://www.lqcd.org/ildg\" "
-        << "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
-        << "xsi:schemaLocation=\"http://www.lqcd.org/ildg http://www.lqcd.org/ildg/ildg-format.xsd\">\n"
-        << "  <version>1.1</version>\n"
-        << "  <field>su3gauge</field>\n"
-        << "  <precision>" << precision << "</precision>\n"
-        << "  <lx>" << lx << "</lx>\n"
-        << "  <ly>" << ly << "</ly>\n"
-        << "  <lz>" << lz << "</lz>\n"
-        << "  <lt>" << lt << "</lt>\n"
-        << "</ildgFormat>";
-    return oss.str();
-}
-
-void io::ildg::save_ildg(const GaugeField &field, const Geometry &geo, const std::string &filename) {
-    //Filepath for conf
-    fs::path dir("data");
     try {
         if (!fs::exists(dir)) {
             fs::create_directories(dir);
@@ -336,126 +687,199 @@ void io::ildg::save_ildg(const GaugeField &field, const Geometry &geo, const std
         std::cerr << "Couldn't create folder data : " << e.what() << std::endl;
         return;
     }
-    fs::path filepath = dir/ (filename+".ildg");
-    //If another file with same name exists
-    int counter = 1;
-    while (fs::exists(filepath)) {
-        //new name generation if file already exists
-        std::string new_name = filename + "_" + std::to_string(counter) + ".ildg";
-        filepath = dir / new_name;
-        counter++;
+    fs::path filepath = dir / (filename + "_params.txt");
+
+    std::ofstream file(filepath, std::ios::out | std::ios::app);
+    if (!file.is_open()) {
+        std::cout << "Could not open file " << filepath << "\n";
+        return;
     }
+    file << std::boolalpha;
 
-    // 1. Prepare XML (double precision)
-    std::string xml_header = generate_ildg_xml(geo.L, geo.L, geo.L, geo.T); // Lx, Ly, Lz, Lt
+    file << "\n#########################################################\n\n";
 
-    // 2. Open C-LIME writer
-    FILE *fp = fopen(filepath.c_str(), "wb");
-    if (!fp) throw std::runtime_error("Impossible de créer le fichier");
-    LimeWriter *writer = limeCreateWriter(fp);
+    file << "# Lattice params\n";
+    file << "L_core = " << rp.L_core << "\n";
+    file << "n_core_dims = " << rp.n_core_dims << "\n";
+    file << "cold_start = " << rp.cold_start << "\n\n";
 
-    // 3. Write the XML Record
-    int MB_flag = 1, ME_flag = 0;
-    n_uint64_t xml_len = xml_header.size();
-    LimeRecordHeader *h_xml = limeCreateHeader(MB_flag, ME_flag, (char*)"ildg-format", xml_len);
-    limeWriteRecordHeader(h_xml, writer);
-    limeWriteRecordData((void*)xml_header.c_str(), &xml_len, writer);
-    limeDestroyHeader(h_xml);
+    file << "# Run params\n";
+    file << "seed = " << rp.seed << "\n";
+    file << "N_shift_therm = " << rp.N_therm << "\n";
+    file << "N_shift = " << rp.N_shift << "\n";
+    file << "N_switch_eo = " << rp.N_switch_eo << "\n\n";
 
-    // 4. Prepare and write the binary data
-    // Physical volume V (no halos)
-    n_uint64_t nbytes = (n_uint64_t) geo.V * 4 * 9 * sizeof(std::complex<double>);
-    ME_flag = 1;
-    LimeRecordHeader *h_bin = limeCreateHeader(0, ME_flag, (char*)"ildg-binary-data", nbytes);
-    limeWriteRecordHeader(h_bin, writer);
+    file << "# ECMC params\n";
+    file << "beta = " << rp.ecmc_params.beta << "\n";
+    file << "theta_sample = " << rp.ecmc_params.param_theta_sample << "\n";
+    file << "theta_refresh_site = " << rp.ecmc_params.param_theta_refresh_site << "\n";
+    file << "theta_refresh_R = " << rp.ecmc_params.param_theta_refresh_R << "\n";
+    file << "epsilon_set = " << rp.ecmc_params.epsilon_set << "\n";
+    file << "poisson = " << rp.ecmc_params.poisson << "\n\n";
 
-    for (size_t site = 0; site < geo.V; site++) {
-        for (int mu = 0; mu < 4; mu++) {
-            // Copy of the matrix
-            SU3 matrix = field.view_link_const(site, mu);
+    file << "# Plaquette params\n";
+    file << "N_shift_plaquette = " << rp.N_shift_plaquette << "\n\n";
 
-            // Endianess inversion
-            double* raw_data = reinterpret_cast<double*>(matrix.data());
-            for (int i = 0; i < 18; i++) {
-                uint64_t *u = reinterpret_cast<uint64_t*>(&raw_data[i]);
-                *u = __builtin_bswap64(*u);
-            }
+    file << "# Topo params\n";
+    file << "topo = " << rp.topo << "\n";
+    file << "N_shift_topo = " << rp.N_shift_topo << "\n";
+    file << "N_steps_gf = " << rp.N_steps_gf << "\n";
+    file << "N_rk_steps = " << rp.N_rk_steps << "\n\n";
 
-            // Matrix writing (18 doubles)
-            n_uint64_t mat_size = 18 * sizeof(double);
-            limeWriteRecordData(raw_data, &mat_size, writer);
+    file << "#Save params\n";
+    file << "save_each_shifts = " << rp.save_each_shifts << "\n\n";
+
+    file.close();
+    std::cout << "Parameters saved in " << filepath << "\n";
+};
+
+// Reads the parameters of input file into RunParams struct
+bool io::read_params(RunParamsECB& params, int rank, const std::string& input) {
+    if (rank == 0) {
+        try {
+            // On suppose que load_params est surchargée pour RunParamsECB
+            io::load_params(input, params);
+        } catch (const std::exception& e) {
+            std::cerr << "Error reading input : " << e.what() << std::endl;
+            MPI_Abort(MPI_COMM_WORLD, 1);
         }
     }
 
-    limeDestroyHeader(h_bin);
-    limeDestroyWriter(writer);
-    fclose(fp);
-    std::cout << "Configuration written in " << filepath << "\n";
-}
+    // 1. Diffusion des paramètres de base (Lattice + Run + Topo)
+    MPI_Bcast(&params.L_core, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.n_core_dims, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.cold_start, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.seed, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_switch_eo, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_shift, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_therm, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.topo, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_shift_plaquette, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_shift_topo, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_steps_gf, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_rk_steps, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.save_each_shifts, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-void io::ildg::read_ildg(GaugeField &field, const Geometry &geo, const std::string &filename) {
-    fs::path dir("data");
-    fs::path filepath = dir/ (filename+".ildg");
-    FILE *fp = fopen(filepath.c_str(), "rb");
-    if (!fp) throw std::runtime_error("Impossible d'ouvrir le fichier : " + filename);
+    // 2. Diffusion du bloc ECMCParams (ecmc_params)
+    MPI_Bcast(&params.ecmc_params.beta, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.ecmc_params.N_samples, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.ecmc_params.param_theta_sample, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.ecmc_params.param_theta_refresh_site, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.ecmc_params.param_theta_refresh_R, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.ecmc_params.poisson, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.ecmc_params.epsilon_set, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-    std::cout << "Reading configuration from " << filepath << "\n";
-    LimeReader *reader = limeCreateReader(fp);
-    bool data_found = false;
+    // 3. Diffusion de la std::string (run_name)
+    int name_len;
+    if (rank == 0) {
+        name_len = static_cast<int>(params.run_name.size());
+    }
 
-    // Parcourir les records du fichier LIME
-    while (limeReaderNextRecord(reader) == LIME_SUCCESS) {
-        char* type = limeReaderType(reader);
+    MPI_Bcast(&name_len, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-        // On cherche uniquement le record binaire
-        if (std::string(type) == "ildg-binary-data") {
-            data_found = true;
+    if (rank != 0) {
+        params.run_name.resize(name_len);
+    }
 
-            n_uint64_t nbytes = limeReaderBytes(reader);
-            n_uint64_t expected_bytes = (n_uint64_t) geo.V * 4 * 9 * sizeof(std::complex<double>);
+    if (name_len > 0) {
+        MPI_Bcast(&params.run_name[0], name_len, MPI_CHAR, 0, MPI_COMM_WORLD);
+    }
 
-            if (nbytes != expected_bytes) {
-                throw std::runtime_error("Taille du fichier ILDG incohérente avec le volume du GaugeField !");
-            }
+    // 3. Diffusion de la std::string (run_dir)
+    int dir_len;
+    if (rank == 0) {
+        dir_len = static_cast<int>(params.run_dir.size());
+    }
 
-            // Lecture site par site, mu par mu
-            for (size_t site = 0; site < geo.V; ++site) {
-                for (int mu = 0; mu < 4; ++mu) {
+    // On envoie d'abord la taille de la string
+    MPI_Bcast(&dir_len, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-                    // On lit 18 doubles (9 complexes)
-                    double buffer[18];
-                    n_uint64_t to_read = 18 * sizeof(double);
-                    limeReaderReadData(buffer, &to_read, reader);
+    // Les autres ranks préparent leur mémoire
+    if (rank != 0) {
+        params.run_dir.resize(dir_len);
+    }
 
-                    // Conversion Big-Endian -> Little-Endian
-                    for (int i = 0; i < 18; ++i) {
-                        uint64_t *u = reinterpret_cast<uint64_t*>(&buffer[i]);
-                        *u = __builtin_bswap64(*u);
-                    }
+    // On envoie le contenu de la string (le buffer interne)
+    if (dir_len > 0) {
+        MPI_Bcast(&params.run_dir[0], dir_len, MPI_CHAR, 0, MPI_COMM_WORLD);
+    }
+    // 4. Vérification de l'existence des fichiers pour la reprise (Resume)
+    fs::path base_path = fs::path(params.run_dir) / params.run_name;
+    fs::path config_file = base_path / params.run_name;  // Le fichier ILDG
+    fs::path seed_dir = base_path / (params.run_name + "_seed");
 
-                    // On "map" le buffer vers une matrice Eigen temporaire (Row-Major)
-                    // Puis on l'affecte à notre view_link
+    // 1. On vérifie d'abord si le fichier de configuration global existe
+    bool local_existing = fs::exists(config_file);
 
-                    // Méthode plus sûre pour copier les données vers votre vecteur 'links' via le Map
-                    auto link = field.view_link(site, mu);
-                    for(int i=0; i<3; ++i) {
-                        for(int j=0; j<3; ++j) {
-                            // ILDG stocke : Re(0,0), Im(0,0), Re(0,1), Im(0,1)...
-                            double re = buffer[2 * (i * 3 + j)];
-                            double im = buffer[2 * (i * 3 + j) + 1];
-                            link(i, j) = std::complex<double>(re, im);
-                        }
-                    }
-                }
-            }
-            break; // Données lues, on peut sortir
+    // 2. On vérifie que TOUS les fichiers de seeds pour ce rang existent
+    int n_threads = omp_get_max_threads();
+    for (int t = 0; t < n_threads; ++t) {
+        std::string seed_name =
+            params.run_name + "_seed_r" + std::to_string(rank) + "_t" + std::to_string(t) + ".txt";
+        fs::path seed_file = seed_dir / seed_name;
+
+        if (!fs::exists(seed_file)) {
+            local_existing = false;
+            break;  // Inutile de vérifier les autres si un seul manque
         }
     }
 
-    if (!data_found) {
-        throw std::runtime_error("Record 'ildg-binary-data' has not been found in the file.");
+    bool global_existing;
+    MPI_Allreduce(&local_existing, &global_existing, 1, MPI_C_BOOL, MPI_LAND, MPI_COMM_WORLD);
+    if (global_existing) {
+        if (rank == 0) std::cout << "All ranks found existing configuration. Resuming...\n";
+        return true;
+    } else {
+        return false;
+    }
+}
+
+// Adds the log of saved shift to params
+void io::add_shift(int shift, const std::string& filename, const std::string& dirpath) {
+    fs::path base_dir(dirpath);
+    fs::path dir = base_dir / filename;
+
+    try {
+        if (!fs::exists(dir)) {
+            fs::create_directories(dir);
+        }
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "Couldn't create folder data : " << e.what() << std::endl;
+        return;
+    }
+    fs::path filepath = dir / (filename + "_params.txt");
+
+    std::ofstream file(filepath, std::ios::out | std::ios::app);
+    if (!file.is_open()) {
+        std::cout << "Could not open file " << filepath << "\n";
+        return;
     }
 
-    limeDestroyReader(reader);
-    fclose(fp);
-}
+    file << "Saved shift " << shift << "\n";
+    file.close();
+};
+
+// Add finished to params
+void io::add_finished(const std::string& filename, const std::string& dirpath) {
+    fs::path base_dir(dirpath);
+    fs::path dir = base_dir / filename;
+
+    try {
+        if (!fs::exists(dir)) {
+            fs::create_directories(dir);
+        }
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "Couldn't create folder data : " << e.what() << std::endl;
+        return;
+    }
+    fs::path filepath = dir / (filename + "_params.txt");
+
+    std::ofstream file(filepath, std::ios::out | std::ios::app);
+    if (!file.is_open()) {
+        std::cout << "Could not open file " << filepath << "\n";
+        return;
+    }
+
+    file << "Saved final state !\n";
+    file.close();
+};

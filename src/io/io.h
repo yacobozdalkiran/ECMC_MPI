@@ -6,51 +6,52 @@
 #ifndef ECMC_MPI_IO_H
 #define ECMC_MPI_IO_H
 
-#include <iostream>
+#include <random>
 #include <vector>
-#include <sstream>
-#include <iomanip>
-#include "../gauge/GaugeField.h"
 
+#include "../ecmc/ecmc_mpi_cb.h"
+#include "../mpi/MpiTopology.h"
 #include "params.h"
 
 namespace io {
-    //Output
-    void save_double(const std::vector<double> &data, const std::string &filename, int precision);
-    void save_double_params(const std::vector<double> &data, const RunParams &params, const std::string &filename, int precision);
+// Output
+void save_plaquette(const std::vector<double>& data, const std::string& filename,
+                    const std::string& dirpath, int precision);
+void save_event_nb(const std::vector<size_t>& event_nb, const std::string& filename,
+                   const std::string& dirpath);
+void save_event_nb(const std::vector<size_t>& event_nb, const std::vector<size_t>& lift_nb,
+                   const std::vector<size_t> rev_nb, const std::vector<double> lambda,
+                   const std::string& filename, const std::string& dirpath);
+void save_topo(const std::vector<double>& tQE, const std::string& filename,
+               const std::string& dirpath, int precision);
+void save_seed(std::mt19937_64& rng, const std::string& filename, const std::string& dirpath,
+               mpi::MpiTopology& topo);
+void save_seed(std::vector<std::mt19937_64>& rng, const std::string& filename,
+               const std::string& dirpath, mpi::MpiTopology& topo);
+void save_params(const RunParamsHbCB& rp, const std::string& filename, const std::string& dirpath);
+void save_params(const RunParamsECB& rp, const std::string& filename, const std::string& dirpath);
+void add_shift(int shift, const std::string& filename, const std::string& dirpath);
+void add_finished(const std::string& filename, const std::string& dirpath);
+void save_state(const LocalChainState& state, const std::string& filename,
+                const std::string& dirpath, mpi::MpiTopology& topo);
+// Input
+std::string trim(const std::string& s);
+void load_params(const std::string& filename, RunParamsECB& rp);
+void load_params(const std::string& filename, RunParamsHbCB& rp);
+void load_state(LocalChainState& state, const std::string& filename, const std::string& dirpath,
+                mpi::MpiTopology& topo);
 
-    //Input
-    std::string trim(const std::string& s);
-    void load_params(const std::string& filename, RunParams& rp);
-    void load_params(const std::string& filename, RunParamsCB& rp);
-    void load_params(const std::string &filename, RunParamsSC& rp);
-    void load_params(const std::string &filename, RunParamsMetro& rp);
-    void load_params(const std::string &filename, RunParamsHb& rp);
-    void load_params(const std::string &filename, RunParamsHbMPI& rp);
+// Utilitaries
+std::string format_double(double val, int precision);
 
-    //Utilitaries
-    inline std::string format_double(double val, int precision) {
-        std::stringstream ss;
-        ss << std::fixed << std::setprecision(precision) << val;
-        return ss.str();
-    }
+// Load parameters from input file
+bool read_params(RunParamsHbCB& params, int rank, const std::string& input);
+bool read_params(RunParamsECB& params, int rank, const std::string& input);
+}  // namespace io
 
-    //ILDG
-    namespace ildg {
-        std::string generate_ildg_xml(int lx, int ly, int lz, int lt, int precision = 64);
-        void save_ildg(const GaugeField &field, const Geometry &geo, const std::string &filename);
-        void read_ildg(GaugeField &field, const Geometry &geo, const std::string &filename);
-    }
-}
+// Printing
+void print_parameters(const RunParamsHbCB& rp, const mpi::MpiTopology& topo);
+void print_parameters(const RunParamsECB& rp, const mpi::MpiTopology& topo);
+void print_time(long elapsed);
 
-//Printing
-
-//Prints the elapsed time
-inline void print_time(long elapsed) {
-    std::cout << "==========================================" << std::endl;
-    std::cout << "Elapsed time : " << elapsed << "s\n";
-    std::cout << "==========================================" << std::endl;
-}
-
-
-#endif //ECMC_MPI_IO_H
+#endif  // ECMC_MPI_IO_H

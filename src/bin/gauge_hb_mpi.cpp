@@ -1,13 +1,13 @@
-#include <mpi.h>
+#include <omp.h>
 
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 
-#include "../ecmc/ecmc_mpi_cb.h"
 #include "../flow/gradient_flow.h"
 #include "../gauge/GaugeField.h"
+#include "../heatbath/heatbath_mpi.h"
 #include "../io/ildg.h"
 #include "../io/io.h"
 #include "../mpi/HalosExchange.h"
@@ -17,7 +17,7 @@
 
 namespace fs = std::filesystem;
 
-void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
+void generate_hb_cb(const RunParamsHbCB& rp, bool existing) {
     //========================Objects initialization====================
     // MPI
     int n_core_dims = rp.n_core_dims;
@@ -27,6 +27,7 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
     int L = rp.L_core;
     GeometryCB geo(L);
     GaugeField field(geo);
+    // Vector rng for OpenMP
     int n_threads = omp_get_max_threads();
     std::vector<std::mt19937_64> rng(n_threads);
     for (int i = 0; i < n_threads; i++) {
@@ -37,13 +38,8 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
         field.hot_start(geo, rng[0]);
     }
 
-    // Chain state
-    LocalChainState state{};
-    Distributions d(rp.ecmc_params);
-
     if (existing) {
         read_ildg_clime(rp.run_name, rp.run_dir, field, geo, topo);
-        io::load_state(state, rp.run_name, rp.run_dir, topo);
         for (int i = 0; i < n_threads; i++) {
             fs::path state_path = fs::path(rp.run_dir) / rp.run_name / (rp.run_name + "_seed") /
                                   (rp.run_name + "_seed_r" + std::to_string(topo.rank) + "_t" +
@@ -58,13 +54,13 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
             }
         }
     }
-    MPI_Barrier(MPI_COMM_WORLD);
 
-    // Initalization of halos for ECMC
+    MPI_Barrier(MPI_COMM_WORLD);
+    // Initalization of halos
     mpi::exchange::exchange_halos_cascade(field, geo, topo);
 
-    // Params ECMC
-    ECMCParams ep = rp.ecmc_params;
+    // Params HB
+    HbParams hp = rp.hp;
 
     // Shift objects
     HalosShift halo_shift(geo);
@@ -86,14 +82,6 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
                         rp.N_steps_gf);
         tQE_current.reserve(3 * rp.N_rk_steps * rp.N_steps_gf);
     }
-    std::vector<size_t> event_nb;
-    std::vector<size_t> lift_nb;
-    std::vector<double> lambda;
-    std::vector<size_t> rev_nb;
-    lift_nb.reserve(rp.save_each_shifts / rp.N_shift_plaquette + 2);
-    event_nb.reserve(rp.save_each_shifts / rp.N_shift_plaquette + 2);
-    lambda.reserve(rp.save_each_shifts / rp.N_shift_plaquette + 2);
-    rev_nb.reserve(rp.save_each_shifts / rp.N_shift_plaquette + 2);
 
     // Save params
     if (topo.rank == 0) {
@@ -103,32 +91,24 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
     // Print params
     print_parameters(rp, topo);
 
-    //==============================ECMC Checkboard===========================
-    // Thermalisation
-    // Skipped if existing (for successive jobs in slurm)
+    //==============================Heatbath Checkboard===========================
 
+    // Thermalisation
+    // Skipped if existing conf (for array runs in slurm)
     if (!existing) {
         if (topo.rank == 0) {
             std::cout << "\n\n===========================================\n";
             std::cout << "Thermalisation : " << rp.N_therm << " shifts\n";
             std::cout << "===========================================\n";
         }
-
         for (int i = 0; i < rp.N_therm; i++) {
             if (topo.rank == 0) {
                 std::cout << "\n\n==========" << "(Therm) Shift " << i << "==========\n";
             }
             // Random shift
             mpi::shift::random_shift(field, geo, halo_shift, topo, rng[0]);
-            // New chain
-            state.initialized = false;
-            mpi::ecmccb::sample_persistant(state, d, field, geo, ep, rng[0]);
+            mpi::heatbathcb::samples(field, geo, hp, rng);
             mpi::exchange::exchange_halos_cascade(field, geo, topo);
-
-            // Event counter reinitialized
-            state.event_counter = 0;
-            state.lift_counter = 0;
-            state.rev_counter = 0;
 
             // Plaquette measure (not saved for thermalization)
             if (i % rp.N_shift_plaquette == 0) {
@@ -157,59 +137,17 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
 
         // Random shift
         mpi::shift::random_shift(field, geo, halo_shift, topo, rng[0]);
-        // New chain
-        state.initialized = false;
-
-        mpi::ecmccb::sample_persistant(state, d, field, geo, ep, rng[0]);
+        mpi::heatbathcb::samples(field, geo, hp, rng);
         mpi::exchange::exchange_halos_cascade(field, geo, topo);
 
         // Plaquette measure
-        if ((i % rp.N_shift_plaquette == 0) and (i > 0 or !existing)) {
+        if (i % rp.N_shift_plaquette == 0 and (i > 0 or !existing)) {
             double p = mpi::observables::mean_plaquette_global(field, geo, topo);
             if (topo.rank == 0) {
                 std::cout << "====== Plaquette ======\n";
                 std::cout << "Sample " << i / rp.N_shift_plaquette << ", <P> = " << p << "\n";
             }
             plaquette.emplace_back(p);
-            // Event counting
-            // Réduction des compteurs de lifts pour lambda
-            unsigned long local_lifts = state.lift_counter;
-            unsigned long local_events = state.event_counter;
-            unsigned long local_rev = state.rev_counter;
-            unsigned long global_lifts = 0;
-            unsigned long global_events = 0;
-            unsigned long global_rev = 0;
-            double local_lambda =
-                (rp.N_shift_plaquette * state.theta_sample) / (double)local_lifts;
-            double global_lambda = 0.0;
-            MPI_Reduce(&local_lambda, &global_lambda, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-            MPI_Reduce(&local_lifts, &global_lifts, 1, MPI_UNSIGNED_LONG, MPI_SUM, 0,
-                       MPI_COMM_WORLD);
-            MPI_Reduce(&local_rev, &global_rev, 1, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-            MPI_Reduce(&local_events, &global_events, 1, MPI_UNSIGNED_LONG, MPI_SUM, 0,
-                       MPI_COMM_WORLD);
-
-            if (topo.rank == 0) {
-                // Distance totale parcourue par l'ensemble des coeurs
-                double avg_lambda = global_lambda / (double)topo.size;
-                size_t avg_lift_nb = global_lifts / topo.size;
-                size_t avg_rev_nb = global_rev / topo.size;
-                size_t avg_event_nb = global_events / topo.size;
-
-                lambda.emplace_back(avg_lambda);
-                lift_nb.emplace_back(avg_lift_nb);
-                event_nb.emplace_back(avg_event_nb);
-                rev_nb.emplace_back(avg_rev_nb);
-
-                std::cout << ">>> Average \u03bb = " << avg_lambda << ", Events : " << avg_event_nb
-                          << " (Reversibility : " << (double)avg_rev_nb / (double)avg_lift_nb * 100
-                          << "%)\n";
-            }
-
-            // Event counter reinitialized
-            state.event_counter = 0;
-            state.lift_counter = 0;
-            state.rev_counter = 0;
         }
         // Measure topo
         if (rp.topo and (i % rp.N_shift_topo == 0) and (i > 0 or !existing)) {
@@ -227,7 +165,7 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
                            std::make_move_iterator(tQE_current.end()));
         }
 
-        // Save conf/seed/chain state/obs
+        // Save conf/seed/obs
         if (i > 0 and i % rp.save_each_shifts == 0) {
             if (topo.rank == 0) {
                 std::cout << "\n\n==========================================\n";
@@ -238,28 +176,17 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
                     io::save_topo(tQE_tot, rp.run_name, rp.run_dir, precision);
                 }
                 io::add_shift(i, rp.run_name, rp.run_dir);
-                io::save_event_nb(event_nb, lift_nb, rev_nb, lambda, rp.run_name, rp.run_dir);
             }
-            // Save conf
-            save_ildg_clime(rp.run_name, rp.run_dir, field, geo, topo);
             // Save seeds
             io::save_seed(rng, rp.run_name, rp.run_dir, topo);
-            // Save chain state
-            io::save_state(state, rp.run_name, rp.run_dir, topo);
+            // Save conf
+            save_ildg_clime(rp.run_name, rp.run_dir, field, geo, topo);
             if (topo.rank == 0) {
                 std::cout << "==========================================\n";
             }
             // Clear the measures
             plaquette.clear();
             plaquette.reserve(rp.save_each_shifts / rp.N_shift_plaquette + 2);
-            event_nb.clear();
-            event_nb.reserve(rp.save_each_shifts / rp.N_shift_plaquette + 2);
-            lift_nb.clear();
-            lift_nb.reserve(rp.save_each_shifts / rp.N_shift_plaquette + 2);
-            rev_nb.clear();
-            rev_nb.reserve(rp.save_each_shifts / rp.N_shift_plaquette + 2);
-            lambda.clear();
-            lambda.reserve(rp.save_each_shifts / rp.N_shift_plaquette + 2);
             tQE_tot.clear();
             tQE_tot.reserve(3 * (rp.save_each_shifts / rp.N_shift_topo + 2) * rp.N_rk_steps *
                             rp.N_steps_gf);
@@ -268,7 +195,6 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
 
     //===========================Output======================================
 
-    // Save conf/seed/chain state/obs
     if (topo.rank == 0) {
         std::cout << "\n\n==========================================\n";
         // Write the output
@@ -279,14 +205,11 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
         }
         io::add_shift(rp.N_shift, rp.run_name, rp.run_dir);
         io::add_finished(rp.run_name, rp.run_dir);
-        io::save_event_nb(event_nb, lift_nb, rev_nb, lambda, rp.run_name, rp.run_dir);
     }
-    // Save conf
-    save_ildg_clime(rp.run_name, rp.run_dir, field, geo, topo);
     // Save seeds
     io::save_seed(rng, rp.run_name, rp.run_dir, topo);
-    // Save chain state
-    io::save_state(state, rp.run_name, rp.run_dir, topo);
+    // Save conf
+    save_ildg_clime(rp.run_name, rp.run_dir, field, geo, topo);
     if (topo.rank == 0) {
         std::cout << "==========================================\n";
     }
@@ -308,14 +231,14 @@ int main(int argc, char* argv[]) {
     }
 
     // Charging the parameters of the run
-    RunParamsECB params;
+    RunParamsHbCB params;
     bool existing = io::read_params(params, rank, argv[1]);
 
     // Measuring time
     MPI_Barrier(MPI_COMM_WORLD);
     double start_time = MPI_Wtime();
 
-    generate_ecmc_cb(params, existing);
+    generate_hb_cb(params, existing);
 
     MPI_Barrier(MPI_COMM_WORLD);
     double end_time = MPI_Wtime();

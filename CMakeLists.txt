@@ -1,27 +1,25 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.10)
 project(ECMC_MPI)
+
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
 endif()
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 find_package(MPI REQUIRED)
-find_package(Eigen3 REQUIRED NO_MODULE)
-
+find_package(OpenMP REQUIRED)
+find_package(Eigen3 REQUIRED) # Décommente si besoin
 include(FetchContent)
+#Lime
 FetchContent_Declare(
         lime
         GIT_REPOSITORY https://github.com/usqcd-software/c-lime.git
         GIT_TAG        master  # Ou un tag spécifique comme v1.3.2
 )
-
-# Rend les cibles de C-LIME disponibles
 FetchContent_MakeAvailable(lime)
-
+#Eigen
 if(NOT Eigen3_FOUND)
     message(STATUS "Eigen3 not found. Download via FetchContent...")
 
@@ -35,242 +33,109 @@ else()
     message(STATUS "Eigen3 found on the system.")
 endif()
 
+#===ECMC QNCB===
 add_executable(gauge_ecmc_mpi src/bin/gauge_ecmc_mpi.cpp
         src/gauge/GaugeField.cpp
         src/su3/utils.cpp
-        src/observables/observables_mpi.cpp
-        src/mpi/MpiTopology.cpp
-        src/mpi/HalosExchange.cpp
-        src/mpi/Halo.h
-        src/ecmc/ecmc_mpi.cpp
-        src/io/io.cpp
-        src/io/params.h
-        src/geometry/GeometryHaloECMC.cpp
-        src/geometry/types.h
-        src/mpi/types.h
-)
-
-
-# Configuration des options selon le compilateur détecté
-if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-    # Options spécifiques à icpx (OneAPI)
-    target_compile_options(gauge_ecmc_mpi PRIVATE
-            -O2
-            #-xHost            # Remplace -march=native pour Intel
-            -fp-model precise
-            -Wall -Wextra
-    )
-else()
-    target_compile_options(gauge_ecmc_mpi PRIVATE
-            -O2
-            #-ffast-math
-            #-march=native
-            -Wall -Wextra -Wpedantic
-    )
-endif()
-
-target_link_libraries(gauge_ecmc_mpi PRIVATE MPI::MPI_CXX Eigen3::Eigen lime)
-
-add_executable(gauge_single_core src/bin/gauge_single_core.cpp
-        src/gauge/GaugeField.cpp
-        src/geometry/Geometry.cpp
-        src/ecmc/ecmc.cpp
-        src/su3/utils.cpp
-        src/observables/observables.cpp
-        src/io/io.cpp
-        src/io/params.h
-        src/flow/gradient_flow.cpp
-        src/flow/gradient_flow.h
-        src/geometry/types.h
-        src/mpi/types.h
-)
-
-target_link_libraries(gauge_single_core PRIVATE Eigen3::Eigen lime)
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-    target_compile_options(gauge_single_core PRIVATE
-            -O2
-            #-xHost
-            -fp-model precise
-            -Wall -Wextra
-    )
-else()
-    target_compile_options(gauge_single_core PRIVATE
-            -O2
-            #-ffast-math
-            #-march=native
-            -Wall -Wextra -Wpedantic
-    )
-endif()
-
-add_executable(gauge_metropolis src/bin/gauge_metropolis.cpp
-        src/metropolis/metropolis.cpp
-        src/gauge/GaugeField.cpp
-        src/geometry/Geometry.cpp
-        src/su3/utils.cpp
-        src/observables/observables.cpp
-        src/io/io.cpp
-        src/io/params.h
-        src/flow/gradient_flow.cpp
-        src/flow/gradient_flow.h
-        src/geometry/types.h
-        src/mpi/types.h
-)
-
-target_link_libraries(gauge_metropolis PRIVATE Eigen3::Eigen lime)
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-    target_compile_options(gauge_metropolis PRIVATE
-            -O2
-            #-xHost
-            -fp-model precise
-            -Wall -Wextra
-    )
-else()
-    target_compile_options(gauge_metropolis PRIVATE
-            -O2
-            #-ffast-math
-            #-march=native
-            -Wall -Wextra -Wpedantic
-    )
-endif()
-
-add_executable(gauge_heatbath
-        src/bin/gauge_heatbath.cpp
-        src/heatbath/heatbath.cpp
-        src/gauge/GaugeField.cpp
-        src/geometry/Geometry.cpp
-        src/su3/utils.cpp
-        src/observables/observables.cpp
-        src/io/io.cpp
-        src/io/params.h
-        src/flow/gradient_flow.cpp
-        src/flow/gradient_flow.h
-        src/geometry/types.h
-        src/mpi/types.h
-)
-
-target_link_libraries(gauge_heatbath PRIVATE Eigen3::Eigen lime)
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-    target_compile_options(gauge_heatbath PRIVATE
-            -O2
-            #-xHost
-            -fp-model precise
-            -Wall -Wextra
-)
-else()
-    target_compile_options(gauge_heatbath PRIVATE
-            -O2
-            #-ffast-math
-            #-march=native
-            -Wall -Wextra -Wpedantic
-)
-endif()
-
-add_executable(gauge_heatbath_mpi src/bin/gauge_heatbath_mpi.cpp
-        src/heatbath/heatbath.cpp
-        src/gauge/GaugeField.cpp
-        src/su3/utils.cpp
-        src/observables/observables_mpi.cpp
-        src/observables/observables.cpp
-        src/mpi/MpiTopology.cpp
-        src/mpi/HalosExchange.cpp
-        src/mpi/Halo.h
-        src/ecmc/ecmc_mpi.cpp
-        src/io/io.cpp
-        src/io/params.h
-        src/geometry/GeometryHaloECMC.cpp
-        src/heatbath/heatbath_mpi.cpp
-        src/geometry/types.h
-        src/mpi/types.h
-)
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-    target_compile_options(gauge_heatbath_mpi PRIVATE
-            -O2
-            #-xHost            # Remplace -march=native pour Intel
-            -fp-model precise
-            -Wall -Wextra
-    )
-else()
-    target_compile_options(gauge_heatbath_mpi PRIVATE
-            -O2
-            #-ffast-math
-            #-march=native
-            -Wall -Wextra -Wpedantic
-    )
-endif()
-
-target_link_libraries(gauge_heatbath_mpi PRIVATE MPI::MPI_CXX Eigen3::Eigen lime)
-
-add_executable(flow_test src/bin/flow_test.cpp
-        src/gauge/GaugeField.cpp
-        src/geometry/Geometry.cpp
-        src/observables/observables.cpp
-        src/flow/gradient_flow.cpp
-        src/heatbath/heatbath.cpp
-        src/ecmc/ecmc.cpp
-        src/io/io.cpp
-        src/io/params.h
-        src/su3/utils.cpp
-        src/geometry/types.h
-        src/mpi/types.h
-    )
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-    target_compile_options(flow_test PRIVATE
-            -O2
-            #-xHost            # Remplace -march=native pour Intel
-            -fp-model precise
-            -Wall -Wextra
-    )
-else()
-    target_compile_options(flow_test PRIVATE
-            -O2
-            #-ffast-math
-            #-march=native
-            -Wall -Wextra -Wpedantic
-    )
-endif()
-
-target_link_libraries(flow_test PRIVATE Eigen3::Eigen lime)
-
-
-add_executable(gauge_ecmc_cb src/bin/gauge_ecmc_cb.cpp
-        src/gauge/GaugeField.cpp
-        src/su3/utils.cpp
-        src/observables/observables_mpi.cpp
-        src/mpi/MpiTopology.cpp
-        src/mpi/HalosExchange.cpp
-        src/mpi/Halo.h
-        src/mpi/HalosCB.h
-        src/ecmc/ecmc_mpi_cb.cpp
-        src/io/io.cpp
-        src/io/params.h
         src/geometry/GeometryCB.cpp
         src/geometry/types.h
-        src/mpi/types.h
+        src/mpi/MpiTopology.cpp
+        src/mpi/HalosExchange.cpp
+        src/observables/observables_mpi.cpp
+        src/mpi/Shift.cpp
+        src/ecmc/ecmc_mpi_cb.cpp
+        src/io/params.h
+        src/io/io.cpp
+        src/flow/gradient_flow.cpp
+        src/io/ildg.cpp
 )
-
-# Configuration des options selon le compilateur détecté
+target_link_libraries(gauge_ecmc_mpi PRIVATE MPI::MPI_CXX Eigen3::Eigen lime OpenMP::OpenMP_CXX)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-    # Options spécifiques à icpx (OneAPI)
-    target_compile_options(gauge_ecmc_cb PRIVATE
-            -O2
-            #-xHost            # Remplace -march=native pour Intel
+    target_compile_options(gauge_ecmc_mpi PRIVATE
+            -O3
+            -xHost            # Remplace -march=native pour Intel
+            -qopenmp
             -fp-model precise
             -Wall -Wextra
     )
 else()
-    target_compile_options(gauge_ecmc_cb PRIVATE
+    target_compile_options(gauge_ecmc_mpi PRIVATE
             -O2
             #-ffast-math
             #-march=native
             -Wall -Wextra -Wpedantic
+            -fopenmp
     )
 endif()
 
-target_link_libraries(gauge_ecmc_cb PRIVATE MPI::MPI_CXX Eigen3::Eigen lime)
+#===ECMC QNCB norev===
+add_executable(gauge_ecmc_mpi_norev src/bin/gauge_ecmc_mpi_norev.cpp
+        src/gauge/GaugeField.cpp
+        src/su3/utils.cpp
+        src/geometry/GeometryCB.cpp
+        src/geometry/types.h
+        src/mpi/MpiTopology.cpp
+        src/mpi/HalosExchange.cpp
+        src/observables/observables_mpi.cpp
+        src/mpi/Shift.cpp
+        src/ecmc/ecmc_mpi_cb.cpp
+        src/io/params.h
+        src/io/io.cpp
+        src/flow/gradient_flow.cpp
+        src/io/ildg.cpp
+)
+target_link_libraries(gauge_ecmc_mpi_norev PRIVATE MPI::MPI_CXX Eigen3::Eigen lime OpenMP::OpenMP_CXX)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+    target_compile_options(gauge_ecmc_mpi_norev PRIVATE
+            -O3
+            -xHost            # Remplace -march=native pour Intel
+            -qopenmp
+            -fp-model precise
+            -Wall -Wextra
+    )
+else()
+    target_compile_options(gauge_ecmc_mpi_norev PRIVATE
+            -O2
+            #-ffast-math
+            #-march=native
+            -Wall -Wextra -Wpedantic
+            -fopenmp
+    )
+endif()
 
+#===HB QNCB===
+add_executable(gauge_hb_mpi src/bin/gauge_hb_mpi.cpp
+        src/gauge/GaugeField.cpp
+        src/su3/utils.cpp
+        src/geometry/GeometryCB.cpp
+        src/geometry/types.h
+        src/mpi/MpiTopology.cpp
+        src/mpi/HalosExchange.cpp
+        src/observables/observables_mpi.cpp
+        src/mpi/Shift.cpp
+        src/heatbath/heatbath.cpp
+        src/heatbath/heatbath_mpi.cpp
+        src/io/params.h
+        src/io/io.cpp
+        src/flow/gradient_flow.cpp
+        src/io/ildg.cpp
+)
+target_link_libraries(gauge_hb_mpi PRIVATE MPI::MPI_CXX Eigen3::Eigen lime OpenMP::OpenMP_CXX)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+    target_compile_options(gauge_hb_mpi PRIVATE
+            -O3
+            -xHost            # Remplace -march=native pour Intel
+            -qopenmp
+            -fp-model precise
+            -Wall -Wextra
+    )
+else()
+    target_compile_options(gauge_hb_mpi PRIVATE
+            -O2
+            #-ffast-math
+            #-march=native
+            -Wall -Wextra -Wpedantic
+            -fopenmp
+    )
+endif()
 
