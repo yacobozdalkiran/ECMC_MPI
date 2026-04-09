@@ -95,6 +95,8 @@ void generate_hb_cb(const RunParamsHbCB& rp, bool existing) {
 
     // Thermalisation
     // Skipped if existing conf (for array runs in slurm)
+    int N_unit = 1000;
+
     if (!existing) {
         if (topo.rank == 0) {
             std::cout << "\n\n===========================================\n";
@@ -108,6 +110,9 @@ void generate_hb_cb(const RunParamsHbCB& rp, bool existing) {
             // Random shift
             mpi::shift::random_shift(field, geo, halo_shift, topo, rng[0]);
             mpi::heatbathcb::samples(field, geo, hp, rng);
+            if (i % N_unit == 0 and i > 0) {
+                field.project_field_su3(geo);
+            }
             mpi::exchange::exchange_halos_cascade(field, geo, topo);
 
             // Plaquette measure (not saved for thermalization)
@@ -138,6 +143,9 @@ void generate_hb_cb(const RunParamsHbCB& rp, bool existing) {
         // Random shift
         mpi::shift::random_shift(field, geo, halo_shift, topo, rng[0]);
         mpi::heatbathcb::samples(field, geo, hp, rng);
+        if (i % N_unit == 0 and i > 0) {
+            field.project_field_su3(geo);
+        }
         mpi::exchange::exchange_halos_cascade(field, geo, topo);
 
         // Plaquette measure
