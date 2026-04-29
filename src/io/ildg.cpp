@@ -38,16 +38,18 @@ void save_ildg_clime(const std::string& filename, const std::string& dirpath,
     MPI_Offset header_offset = 0;
 
     fs::path dir(dirpath);
-    fs::path file = dir / filename /filename;
+    fs::path file = dir / filename / filename;
+    fs::path tmp_file = file.string() + ".tmp";
+
     // --- ÉTAPE 1 : Le Rang 0 écrit les Headers LIME ---
     if (topo.rank == 0) {
-        if (!fs::exists(dir)) {
-            fs::create_directories(dir);
+        if (!fs::exists(dir / filename)) {
+            fs::create_directories(dir / filename);
         }
-        FILE* fp = fopen(file.string().c_str(), "w");
+        FILE* fp = fopen(tmp_file.string().c_str(), "w");
         if (!fp) {
-            std::pair<std::string, int> err_info(file.string(), errno);
-            std::cerr << "Erreur critique : Impossible d'ouvrir le fichier en écriture : "
+            std::pair<std::string, int> err_info(tmp_file.string(), errno);
+            std::cerr << "Erreur critique : Impossible d'ouvrir le fichier temporaire en écriture : "
                       << err_info.first << " (errno: " << err_info.second << ")" << std::endl;
             header_offset = -1;  // Signal d'erreur pour le Bcast
         } else {
@@ -72,18 +74,17 @@ void save_ildg_clime(const std::string& filename, const std::string& dirpath,
 
             limeDestroyWriter(w);
             fclose(fp);
-            if (topo.rank == 0) {
-                std::cout << "Configuration saved in " << file << "\n";
-            }
         }
     }
 
     MPI_Barrier(topo.cart_comm);
     // --- ÉTAPE 2 : Synchronisation de l'offset ---
     MPI_Bcast(&header_offset, 1, MPI_OFFSET, 0, topo.cart_comm);
-    // --- ÉTAPE 3 : Écriture MPI-I/O (Identique à la fonction précédente) ---
-    // On réutilise la logique de local_buffer et de subarray
+    if (header_offset == -1) {
+        MPI_Abort(topo.cart_comm, 1);
+    }
 
+    // --- ÉTAPE 3 : Écriture MPI-I/O ---
     std::vector<double> local_buffer(geo.V_int * 72);
     size_t buf_idx = 0;
     for (int t = 1; t <= geo.L_int; ++t) {
@@ -107,10 +108,10 @@ void save_ildg_clime(const std::string& filename, const std::string& dirpath,
 
     MPI_File fh;
     int err =
-        MPI_File_open(topo.cart_comm, file.string().c_str(), MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
+        MPI_File_open(topo.cart_comm, tmp_file.string().c_str(), MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
     if (err != MPI_SUCCESS) {
         if (topo.rank == 0)
-            std::cerr << "Fatal: Cannot open MPI file for writing: " << file << std::endl;
+            std::cerr << "Fatal: Cannot open MPI file for writing: " << tmp_file << std::endl;
         MPI_Abort(topo.cart_comm, err);
     }
     // Définition du type de donnée et du subarray (comme avant)
@@ -133,6 +134,18 @@ void save_ildg_clime(const std::string& filename, const std::string& dirpath,
     MPI_File_close(&fh);
     MPI_Type_free(&file_type);
     MPI_Type_free(&site_type);
+
+    // --- ÉTAPE 4 : Renommage atomique par le Rang 0 ---
+    MPI_Barrier(topo.cart_comm);
+    if (topo.rank == 0) {
+        try {
+            fs::rename(tmp_file, file);
+            std::cout << "Configuration saved in " << file << "\n";
+        } catch (const fs::filesystem_error& e) {
+            std::cerr << "Error renaming " << tmp_file << " to " << file << ": " << e.what() << std::endl;
+            MPI_Abort(topo.cart_comm, 1);
+        }
+    }
 }
 
 void read_ildg_clime(const std::string& filename, const std::string& dirpath, GaugeField& field,

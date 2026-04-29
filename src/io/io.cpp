@@ -158,14 +158,22 @@ void io::save_seed(std::mt19937_64& rng, const std::string& filename, const std:
     }
     MPI_Barrier(topo.cart_comm);
     fs::path filepath = run_dir / (filename + "_seed" + std::to_string(topo.rank) + ".txt");
+    fs::path tmp_filepath = filepath.string() + ".tmp";
 
-    std::ofstream file(filepath);
+    std::ofstream file(tmp_filepath);
     if (!file.is_open()) {
-        std::cout << "Could not open file " << filepath << "\n";
+        std::cout << "Could not open file " << tmp_filepath << "\n";
         return;
     }
     file << rng;
     file.close();
+
+    try {
+        fs::rename(tmp_filepath, filepath);
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "Rank " << topo.rank << ": Error renaming seed file: " << e.what() << std::endl;
+    }
+
     if (topo.rank == 0) {
         std::cout << "Seed saved in " << filepath << "\n";
     }
@@ -199,16 +207,23 @@ void io::save_seed(std::vector<std::mt19937_64>& rng, const std::string& filenam
         std::string seed_name =
             filename + "_seed_r" + std::to_string(topo.rank) + "_t" + std::to_string(t) + ".txt";
         fs::path filepath = run_dir / seed_name;
+        fs::path tmp_filepath = filepath.string() + ".tmp";
 
-        std::ofstream file(filepath);
+        std::ofstream file(tmp_filepath);
         if (!file.is_open()) {
-            std::cerr << "Rank " << topo.rank << ": Could not open file " << filepath << "\n";
+            std::cerr << "Rank " << topo.rank << ": Could not open file " << tmp_filepath << "\n";
             continue;  // On essaie quand même les autres threads
         }
 
         // On sérialise l'état interne du générateur
         file << rng[t];
         file.close();
+
+        try {
+            fs::rename(tmp_filepath, filepath);
+        } catch (const fs::filesystem_error& e) {
+            std::cerr << "Rank " << topo.rank << ": Error renaming seed file " << seed_name << ": " << e.what() << std::endl;
+        }
     }
 
     // Un seul message pour confirmer que tout le groupe de seeds est sauvé
@@ -237,11 +252,12 @@ void io::save_state(const LocalChainState& state, const std::string& filename,
     // 3. Fichier spécifique au rang : filename_state[rank].txt
     std::string file_rank = filename + "_state" + std::to_string(topo.rank) + ".txt";
     fs::path full_path = state_dir / file_rank;
+    fs::path tmp_path = full_path.string() + ".tmp";
 
-    std::ofstream ofs(full_path);
+    std::ofstream ofs(tmp_path);
     if (!ofs.is_open()) {
         std::cerr << "[Rank " << topo.rank
-                  << "] Error: Could not open state file for writing: " << full_path << std::endl;
+                  << "] Error: Could not open state file for writing: " << tmp_path << std::endl;
         return;
     }
 
@@ -266,6 +282,13 @@ void io::save_state(const LocalChainState& state, const std::string& filename,
     }
 
     ofs.close();
+
+    try {
+        fs::rename(tmp_path, full_path);
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "Rank " << topo.rank << ": Error renaming state file: " << e.what() << std::endl;
+    }
+
     if (topo.rank == 0) {
         std::cout << "ECMC Chain saved in : " << full_path << std::endl;
     }
