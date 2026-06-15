@@ -17,6 +17,8 @@ namespace io {
 // Output
 void save_plaquette(const std::vector<double>& data, const std::string& filename,
                     const std::string& dirpath, int precision);
+void save_final_Q(const std::vector<double>& data, const std::string& filename,
+                    const std::string& dirpath, int precision);
 void save_event_nb(const std::vector<size_t>& event_nb, const std::string& filename,
                    const std::string& dirpath);
 void save_event_nb(const std::vector<size_t>& event_nb, const std::vector<size_t>& lift_nb,

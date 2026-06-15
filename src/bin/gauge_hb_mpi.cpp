@@ -77,9 +77,11 @@ void generate_hb_cb(const RunParamsHbCB& rp, bool existing) {
     std::vector<double> plaquette;
     plaquette.reserve(rp.save_each_shifts / rp.N_shift_plaquette + 2);
 
+    std::vector<double> final_Q;
     std::vector<double> tQE_tot;
     std::vector<double> tQE_current;
     if (rp.topo) {
+        final_Q.reserve(rp.save_each_shifts / rp.N_shift_topo + 2);
         tQE_tot.reserve(3 * (rp.save_each_shifts / rp.N_shift_topo + 2) * rp.N_rk_steps *
                         rp.N_steps_gf);
         tQE_current.reserve(3 * rp.N_rk_steps * rp.N_steps_gf);
@@ -167,6 +169,7 @@ void generate_hb_cb(const RunParamsHbCB& rp, bool existing) {
                           << ", final Q = " << tQE_current[tQE_current.size() - 2]
                           << "\n";  // Print the last value of Q
             }
+            final_Q.emplace_back(tQE_current[tQE_current.size() - 2]);
             tQE_tot.insert(tQE_tot.end(), std::make_move_iterator(tQE_current.begin()),
                            std::make_move_iterator(tQE_current.end()));
         }
@@ -179,6 +182,7 @@ void generate_hb_cb(const RunParamsHbCB& rp, bool existing) {
                 int precision = 10;
                 io::save_plaquette(plaquette, rp.run_name, rp.run_dir, precision);
                 if (rp.topo) {
+                    io::save_final_Q(final_Q, rp.run_name, rp.run_dir, precision);
                     io::save_topo(tQE_tot, rp.run_name, rp.run_dir, precision);
                 }
                 io::add_shift(i, rp.run_name, rp.run_dir);
@@ -197,6 +201,8 @@ void generate_hb_cb(const RunParamsHbCB& rp, bool existing) {
             tQE_tot.clear();
             tQE_tot.reserve(3 * (rp.save_each_shifts / rp.N_shift_topo + 2) * rp.N_rk_steps *
                             rp.N_steps_gf);
+            final_Q.clear();
+            final_Q.reserve(rp.save_each_shifts / rp.N_shift_topo + 2);
         }
     }
 
@@ -208,11 +214,12 @@ void generate_hb_cb(const RunParamsHbCB& rp, bool existing) {
         int precision = 10;
         io::save_plaquette(plaquette, rp.run_name, rp.run_dir, precision);
         if (rp.topo) {
+            io::save_final_Q(final_Q, rp.run_name, rp.run_dir, precision);
             io::save_topo(tQE_tot, rp.run_name, rp.run_dir, precision);
         }
         io::add_shift(rp.N_shift, rp.run_name, rp.run_dir);
         io::add_finished(rp.run_name, rp.run_dir);
-        io::save_shift_nb(start+N_shift, rp.run_name, rp.run_dir);
+        io::save_shift_nb(start + N_shift, rp.run_name, rp.run_dir);
     }
     // Save seeds
     io::save_seed(rng, rp.run_name, rp.run_dir, topo);

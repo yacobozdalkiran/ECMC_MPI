@@ -48,6 +48,36 @@ void io::save_plaquette(const std::vector<double>& data, const std::string& file
     std::cout << "Plaquette written in " << filepath << "\n";
 }
 
+// Saves a vector of doubles in ../data/filename/filename_final_Q.txt
+void io::save_final_Q(const std::vector<double>& data, const std::string& filename,
+                        const std::string& dirpath, int precision) {
+    // Create a data folder if doesn't exists
+    fs::path base_dir(dirpath);
+    fs::path dir = base_dir / filename;
+
+    try {
+        if (!fs::exists(dir)) {
+            fs::create_directories(dir);
+        }
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "Couldn't create folder data : " << e.what() << std::endl;
+        return;
+    }
+    fs::path filepath = dir / (filename + "_final_Q.txt");
+
+    std::ofstream file(filepath, std::ios::out | std::ios::app);
+    if (!file.is_open()) {
+        std::cout << "Could not open file " << filepath << "\n";
+        return;
+    }
+    file << std::fixed << std::setprecision(precision);
+    for (const double& x : data) {
+        file << x << "\n";
+    }
+    file.close();
+    std::cout << "Final Q written in " << filepath << "\n";
+}
+
 void io::save_event_nb(const std::vector<size_t>& event_nb, const std::string& filename,
                        const std::string& dirpath) {
     // Create a data folder if doesn't exists
