@@ -339,6 +339,7 @@ std::pair<std::pair<size_t, int>, int> mpi::ecmccb::lift_improved_fast_norev(
     // geo.get_link_staple(site, mu, j, index_lift).second << " " << epsilon << "\n";
     return std::make_pair(geo.get_link_staple(site, mu, j, index_lift), epsilon);
 }
+
 // Optimized version of lift_improved
 std::pair<std::pair<size_t, int>, int> mpi::ecmccb::lift_improved_fast(const GaugeField& field,
                                                                        const GeometryCB& geo,

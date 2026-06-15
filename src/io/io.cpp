@@ -171,7 +171,8 @@ void io::save_seed(std::mt19937_64& rng, const std::string& filename, const std:
     try {
         fs::rename(tmp_filepath, filepath);
     } catch (const fs::filesystem_error& e) {
-        std::cerr << "Rank " << topo.rank << ": Error renaming seed file: " << e.what() << std::endl;
+        std::cerr << "Rank " << topo.rank << ": Error renaming seed file: " << e.what()
+                  << std::endl;
     }
 
     if (topo.rank == 0) {
@@ -222,7 +223,8 @@ void io::save_seed(std::vector<std::mt19937_64>& rng, const std::string& filenam
         try {
             fs::rename(tmp_filepath, filepath);
         } catch (const fs::filesystem_error& e) {
-            std::cerr << "Rank " << topo.rank << ": Error renaming seed file " << seed_name << ": " << e.what() << std::endl;
+            std::cerr << "Rank " << topo.rank << ": Error renaming seed file " << seed_name << ": "
+                      << e.what() << std::endl;
         }
     }
 
@@ -286,7 +288,8 @@ void io::save_state(const LocalChainState& state, const std::string& filename,
     try {
         fs::rename(tmp_path, full_path);
     } catch (const fs::filesystem_error& e) {
-        std::cerr << "Rank " << topo.rank << ": Error renaming state file: " << e.what() << std::endl;
+        std::cerr << "Rank " << topo.rank << ": Error renaming state file: " << e.what()
+                  << std::endl;
     }
 
     if (topo.rank == 0) {
@@ -760,7 +763,6 @@ void io::save_params(const RunParamsECB& rp, const std::string& filename,
 bool io::read_params(RunParamsECB& params, int rank, const std::string& input) {
     if (rank == 0) {
         try {
-            // On suppose que load_params est surchargée pour RunParamsECB
             io::load_params(input, params);
         } catch (const std::exception& e) {
             std::cerr << "Error reading input : " << e.what() << std::endl;
@@ -906,3 +908,49 @@ void io::add_finished(const std::string& filename, const std::string& dirpath) {
     file << "Saved final state !\n";
     file.close();
 };
+
+void io::save_shift_nb(int shift_nb, const std::string& filename, const std::string& dirpath) {
+    fs::path base_dir(dirpath);
+    fs::path dir = base_dir / filename;
+
+    try {
+        if (!fs::exists(dir)) {
+            fs::create_directories(dir);
+        }
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "Couldn't create folder data : " << e.what() << std::endl;
+        return;
+    }
+    fs::path filepath = dir / (filename + "_checkpoint.txt");
+
+    std::ofstream file(filepath, std::ios::out);
+    if (!file.is_open()) {
+        std::cout << "Could not open file " << filepath << "\n";
+        return;
+    }
+
+    file << shift_nb;
+    file.close();
+}
+
+void io::load_shift_nb(int& shift_nb, const std::string& filename, const std::string& dirpath,
+                       mpi::MpiTopology topo) {
+    // 2. Le noeud maître (rang 0) s'occupe de lire le fichier
+    if (topo.rank == 0) {
+        // Construction sécurisée du chemin grâce à std::filesystem
+        fs::path full_path = fs::path(dirpath) / filename / (filename+ "_checkpoint.txt");
+        std::ifstream file(full_path);
+
+        if (!file.is_open()) {
+            throw std::runtime_error("Erreur : Impossible d'ouvrir le fichier " +
+                                     full_path.string());
+        }
+
+        // Lecture de l'entier
+        file >> shift_nb;
+        file.close();
+    }
+
+    // 3. Diffuser (Broadcast) la valeur à tous les autres noeuds.
+    MPI_Bcast(&shift_nb, 1, MPI_INT, 0, topo.cart_comm);
+}

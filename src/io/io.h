@@ -34,12 +34,15 @@ void add_shift(int shift, const std::string& filename, const std::string& dirpat
 void add_finished(const std::string& filename, const std::string& dirpath);
 void save_state(const LocalChainState& state, const std::string& filename,
                 const std::string& dirpath, mpi::MpiTopology& topo);
+void save_shift_nb(int shift_nb, const std::string& filename, const std::string& dirpath);
 // Input
 std::string trim(const std::string& s);
 void load_params(const std::string& filename, RunParamsECB& rp);
 void load_params(const std::string& filename, RunParamsHbCB& rp);
 void load_state(LocalChainState& state, const std::string& filename, const std::string& dirpath,
                 mpi::MpiTopology& topo);
+void load_shift_nb(int& shift_nb, const std::string& filename, const std::string& dirpath,
+                   mpi::MpiTopology topo);
 
 // Utilitaries
 std::string format_double(double val, int precision);
