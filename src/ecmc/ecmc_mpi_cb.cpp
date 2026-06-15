@@ -446,11 +446,9 @@ void mpi::ecmccb::sample_persistant(LocalChainState& state, Distributions& d, Ga
         }
         state.epsilon = 2 * d.random_eps(rng) - 1;
         state.R = random_su3(rng);
-        state.theta_refresh_site =
-            poisson ? d.dist_refresh_site(rng) : params.param_theta_refresh_site;
-        state.theta_refresh_R = poisson ? d.dist_refresh_R(rng) : params.param_theta_refresh_R;
-        state.theta_parcouru_refresh_site = 0.0;
-        state.theta_parcouru_refresh_R = 0.0;
+        state.theta_refresh =
+            poisson ? d.dist_refresh(rng) : params.param_theta_refresh;
+        state.theta_parcouru_refresh = 0.0;
         state.set_counter = 0;
         state.event_counter = 0;
         state.initialized = true;
@@ -468,11 +466,9 @@ void mpi::ecmccb::sample_persistant(LocalChainState& state, Distributions& d, Ga
 
     // Budget d'angle
     double theta_sample = poisson ? d.dist_sample(rng) : params.param_theta_sample;
-    double theta_refresh_site = state.theta_refresh_site;
-    double theta_refresh_R = state.theta_refresh_R;
+    double theta_refresh = state.theta_refresh;
     double theta_parcouru_sample = 0.0;
-    double theta_parcouru_refresh_site = state.theta_parcouru_refresh_site;
-    double theta_parcouru_refresh_R = state.theta_parcouru_refresh_R;
+    double theta_parcouru_refresh = state.theta_parcouru_refresh;
 
     // Buffer de matrices (Optimisation : Statique pour éviter l'allocation)
     // static std::vector<SU3> set_matrices(101);
@@ -498,12 +494,11 @@ void mpi::ecmccb::sample_persistant(LocalChainState& state, Distributions& d, Ga
 
         // Distances aux frontières
         double dist_to_sample = theta_sample - theta_parcouru_sample;
-        double dist_to_refresh_site = theta_refresh_site - theta_parcouru_refresh_site;
-        double dist_to_refresh_R = theta_refresh_R - theta_parcouru_refresh_R;
+        double dist_to_refresh = theta_refresh - theta_parcouru_refresh;
 
         // Premier événement
         double theta_step =
-            std::min({theta_reject, dist_to_sample, dist_to_refresh_site, dist_to_refresh_R});
+            std::min({theta_reject, dist_to_sample, dist_to_refresh});
 
         if (theta_step == dist_to_sample) {
             // --- EVENT: SAMPLE ---
@@ -514,25 +509,22 @@ void mpi::ecmccb::sample_persistant(LocalChainState& state, Distributions& d, Ga
             state.mu = mu_current;
             state.epsilon = epsilon_current;
             state.R = R;
-            state.theta_parcouru_refresh_site = theta_parcouru_refresh_site + dist_to_sample;
-            state.theta_parcouru_refresh_R = theta_parcouru_refresh_R + dist_to_sample;
+            state.theta_parcouru_refresh = theta_parcouru_refresh + dist_to_sample;
             state.theta_sample = theta_sample;
-            state.theta_refresh_site = theta_refresh_site;
-            state.theta_refresh_R = theta_refresh_R;
+            state.theta_refresh= theta_refresh;
             state.set_counter = set_counter;
             state.event_counter = event_counter;
             state.lift_counter = lift_counter;
             state.rev_counter = rev_counter;
             return;
-        } else if (theta_step == dist_to_refresh_site) {
-            // --- EVENT: REFRESH SITE ---
-            update(field, site_current, mu_current, dist_to_refresh_site, epsilon_current, R);
+        } else if (theta_step == dist_to_refresh) {
+            // --- EVENT: REFRESH ---
+            update(field, site_current, mu_current, dist_to_refresh, epsilon_current, R);
             event_counter++;
 
-            theta_parcouru_sample += dist_to_refresh_site;
-            theta_parcouru_refresh_R += dist_to_refresh_site;
-            theta_parcouru_refresh_site = 0.0;
-            if (poisson) theta_refresh_site = d.dist_refresh_site(rng);
+            theta_parcouru_sample += dist_to_refresh;
+            theta_parcouru_refresh= 0.0;
+            if (poisson) theta_refresh= d.dist_refresh(rng);
 
             site_current = random_site(geo, rng);
             mu_current = d.random_dir(rng);
@@ -541,16 +533,6 @@ void mpi::ecmccb::sample_persistant(LocalChainState& state, Distributions& d, Ga
                 mu_current = d.random_dir(rng);
             }
             epsilon_current = 2 * d.random_eps(rng) - 1;
-        } else if (theta_step == dist_to_refresh_R) {
-            // --- EVENT: REFRESH R ---
-            update(field, site_current, mu_current, dist_to_refresh_R, epsilon_current, R);
-            event_counter++;
-
-            theta_parcouru_sample += dist_to_refresh_R;
-            theta_parcouru_refresh_site += dist_to_refresh_R;
-            theta_parcouru_refresh_R = 0.0;
-            if (poisson) theta_refresh_R = d.dist_refresh_R(rng);
-
             R = random_su3(rng);
         } else {
             // --- EVENT: LIFT ---
@@ -558,8 +540,7 @@ void mpi::ecmccb::sample_persistant(LocalChainState& state, Distributions& d, Ga
             event_counter++;
 
             theta_parcouru_sample += theta_reject;
-            theta_parcouru_refresh_site += theta_reject;
-            theta_parcouru_refresh_R += theta_reject;
+            theta_parcouru_refresh+= theta_reject;
 
             auto l = lift_improved_fast(field, geo, site_current, mu_current, j, R, rng,
                                         epsilon_current);
@@ -590,11 +571,9 @@ void mpi::ecmccb::sample_persistant_norev(LocalChainState& state, Distributions&
         }
         state.epsilon = 2 * d.random_eps(rng) - 1;
         state.R = random_su3(rng);
-        state.theta_refresh_site =
-            poisson ? d.dist_refresh_site(rng) : params.param_theta_refresh_site;
-        state.theta_refresh_R = poisson ? d.dist_refresh_R(rng) : params.param_theta_refresh_R;
-        state.theta_parcouru_refresh_site = 0.0;
-        state.theta_parcouru_refresh_R = 0.0;
+        state.theta_refresh =
+            poisson ? d.dist_refresh(rng) : params.param_theta_refresh;
+        state.theta_parcouru_refresh= 0.0;
         state.set_counter = 0;
         state.event_counter = 0;
         state.initialized = true;
@@ -612,11 +591,9 @@ void mpi::ecmccb::sample_persistant_norev(LocalChainState& state, Distributions&
 
     // Budget d'angle
     double theta_sample = poisson ? d.dist_sample(rng) : params.param_theta_sample;
-    double theta_refresh_site = state.theta_refresh_site;
-    double theta_refresh_R = state.theta_refresh_R;
+    double theta_refresh= state.theta_refresh;
     double theta_parcouru_sample = 0.0;
-    double theta_parcouru_refresh_site = state.theta_parcouru_refresh_site;
-    double theta_parcouru_refresh_R = state.theta_parcouru_refresh_R;
+    double theta_parcouru_refresh= state.theta_parcouru_refresh;
 
     // Buffers de travail
     std::array<double, 6> reject_angles;
@@ -638,12 +615,11 @@ void mpi::ecmccb::sample_persistant_norev(LocalChainState& state, Distributions&
 
         // Distances aux frontières
         double dist_to_sample = theta_sample - theta_parcouru_sample;
-        double dist_to_refresh_site = theta_refresh_site - theta_parcouru_refresh_site;
-        double dist_to_refresh_R = theta_refresh_R - theta_parcouru_refresh_R;
+        double dist_to_refresh= theta_refresh- theta_parcouru_refresh;
 
         // Premier événement
         double theta_step =
-            std::min({theta_reject, dist_to_sample, dist_to_refresh_site, dist_to_refresh_R});
+            std::min({theta_reject, dist_to_sample, dist_to_refresh});
 
         if (theta_step == dist_to_sample) {
             // --- EVENT: SAMPLE ---
@@ -654,25 +630,22 @@ void mpi::ecmccb::sample_persistant_norev(LocalChainState& state, Distributions&
             state.mu = mu_current;
             state.epsilon = epsilon_current;
             state.R = R;
-            state.theta_parcouru_refresh_site = theta_parcouru_refresh_site + dist_to_sample;
-            state.theta_parcouru_refresh_R = theta_parcouru_refresh_R + dist_to_sample;
+            state.theta_parcouru_refresh= theta_parcouru_refresh+ dist_to_sample;
             state.theta_sample = theta_sample;
-            state.theta_refresh_site = theta_refresh_site;
-            state.theta_refresh_R = theta_refresh_R;
+            state.theta_refresh= theta_refresh;
             state.set_counter = set_counter;
             state.event_counter = event_counter;
             state.lift_counter = lift_counter;
             state.rev_counter = rev_counter;
             return;
-        } else if (theta_step == dist_to_refresh_site) {
-            // --- EVENT: REFRESH SITE ---
-            update(field, site_current, mu_current, dist_to_refresh_site, epsilon_current, R);
+        } else if (theta_step == dist_to_refresh) {
+            // --- EVENT: REFRESH---
+            update(field, site_current, mu_current, dist_to_refresh, epsilon_current, R);
             event_counter++;
 
-            theta_parcouru_sample += dist_to_refresh_site;
-            theta_parcouru_refresh_R += dist_to_refresh_site;
-            theta_parcouru_refresh_site = 0.0;
-            if (poisson) theta_refresh_site = d.dist_refresh_site(rng);
+            theta_parcouru_sample += dist_to_refresh;
+            theta_parcouru_refresh= 0.0;
+            if (poisson) theta_refresh= d.dist_refresh(rng);
 
             site_current = random_site(geo, rng);
             mu_current = d.random_dir(rng);
@@ -681,16 +654,6 @@ void mpi::ecmccb::sample_persistant_norev(LocalChainState& state, Distributions&
                 mu_current = d.random_dir(rng);
             }
             epsilon_current = 2 * d.random_eps(rng) - 1;
-        } else if (theta_step == dist_to_refresh_R) {
-            // --- EVENT: REFRESH R ---
-            update(field, site_current, mu_current, dist_to_refresh_R, epsilon_current, R);
-            event_counter++;
-
-            theta_parcouru_sample += dist_to_refresh_R;
-            theta_parcouru_refresh_site += dist_to_refresh_R;
-            theta_parcouru_refresh_R = 0.0;
-            if (poisson) theta_refresh_R = d.dist_refresh_R(rng);
-
             R = random_su3(rng);
         } else {
             // --- EVENT: LIFT ---
@@ -698,8 +661,7 @@ void mpi::ecmccb::sample_persistant_norev(LocalChainState& state, Distributions&
             event_counter++;
 
             theta_parcouru_sample += theta_reject;
-            theta_parcouru_refresh_site += theta_reject;
-            theta_parcouru_refresh_R += theta_reject;
+            theta_parcouru_refresh+= theta_reject;
 
             auto l = lift_improved_fast_norev(field, geo, site_current, mu_current, j, R, rng);
             // On lifte
