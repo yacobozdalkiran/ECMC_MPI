@@ -232,7 +232,7 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
                 }
                 io::add_shift(i, rp.run_name, rp.run_dir);
                 io::save_event_nb(event_nb, lift_nb, rev_nb, lambda, rp.run_name, rp.run_dir);
-                io::save_shift_nb(i, rp.run_name, rp.run_dir);
+                io::save_shift_nb(i+1, rp.run_name, rp.run_dir);
             }
             // Save conf
             save_ildg_clime(rp.run_name, rp.run_dir, field, geo, topo);

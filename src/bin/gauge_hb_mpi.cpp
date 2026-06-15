@@ -185,7 +185,7 @@ void generate_hb_cb(const RunParamsHbCB& rp, bool existing) {
                     io::save_final_Q(final_Q, rp.run_name, rp.run_dir, precision);
                     io::save_topo(tQE_tot, rp.run_name, rp.run_dir, precision);
                 }
-                io::add_shift(i, rp.run_name, rp.run_dir);
+                io::add_shift(i+1, rp.run_name, rp.run_dir);
                 io::save_shift_nb(i, rp.run_name, rp.run_dir);
             }
             // Save seeds
