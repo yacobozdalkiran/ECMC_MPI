@@ -40,10 +40,11 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
     // Chain state
     LocalChainState state{};
     Distributions d(rp.ecmc_params);
-
+    int start = 0;
     if (existing) {
         read_ildg_clime(rp.run_name, rp.run_dir, field, geo, topo);
         io::load_state(state, rp.run_name, rp.run_dir, topo);
+        io::load_shift_nb(start, rp.run_name, rp.run_dir, topo);
         for (int i = 0; i < n_threads; i++) {
             fs::path state_path = fs::path(rp.run_dir) / rp.run_name / (rp.run_name + "_seed") /
                                   (rp.run_name + "_seed_r" + std::to_string(topo.rank) + "_t" +
@@ -103,45 +104,7 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
     // Print params
     print_parameters(rp, topo);
 
-    //==============================ECMC Checkboard===========================
-    // Thermalisation
-    // Skipped if existing (for successive jobs in slurm)
-
-    if (!existing) {
-        if (topo.rank == 0) {
-            std::cout << "\n\n===========================================\n";
-            std::cout << "Thermalisation : " << rp.N_therm << " shifts\n";
-            std::cout << "===========================================\n";
-        }
-
-        for (int i = 0; i < rp.N_therm; i++) {
-            if (topo.rank == 0) {
-                std::cout << "\n\n==========" << "(Therm) Shift " << i << "==========\n";
-            }
-            // Random shift
-            mpi::shift::random_shift(field, geo, halo_shift, topo, rng[0]);
-            // New chain
-            state.initialized = false;
-
-            mpi::ecmccb::sample_persistant_norev(state, d, field, geo, ep, rng[0]);
-            mpi::exchange::exchange_halos_cascade(field, geo, topo);
-
-            // Event counter reinitialized
-            state.event_counter = 0;
-            state.lift_counter = 0;
-            state.rev_counter = 0;
-
-            // Plaquette measure (not saved for thermalization)
-            if (i % rp.N_shift_plaquette == 0) {
-                double p = mpi::observables::mean_plaquette_global(field, geo, topo);
-                if (topo.rank == 0) {
-                    std::cout << "====== Plaquette ======\n";
-                    std::cout << "(Therm) Sample " << i / rp.N_shift_plaquette << ", <P> = " << p
-                              << "\n";
-                }
-            }
-        }
-    }
+    //==============================ECMC===========================
 
     // Sampling
     if (topo.rank == 0) {
@@ -151,25 +114,40 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
         std::cout << "===========================================\n";
     }
 
-    for (int i = 0; i < N_shift; i++) {
+    for (int i = start; i < start + N_shift; i++) {
         if (topo.rank == 0) {
             std::cout << "\n\n=============" << "Shift " << i << "=============\n";
         }
 
         // Random shift
+        MPI_Barrier(MPI_COMM_WORLD);
+        double start_time_sweep = MPI_Wtime();
         mpi::shift::random_shift(field, geo, halo_shift, topo, rng[0]);
         // New chain
         state.initialized = false;
 
         mpi::ecmccb::sample_persistant_norev(state, d, field, geo, ep, rng[0]);
         mpi::exchange::exchange_halos_cascade(field, geo, topo);
-
+        MPI_Barrier(MPI_COMM_WORLD);
+        double end_time_sweep = MPI_Wtime();
+        if (topo.rank == 0) {
+            double total_time_sweep = end_time_sweep - start_time_sweep;
+            std::cout << std::fixed << std::setprecision(4);
+            std::cout << "Sweep time : " << total_time_sweep << "s\n";
+        }
         // Plaquette measure
         if ((i % rp.N_shift_plaquette == 0)) {
+            MPI_Barrier(MPI_COMM_WORLD);
+            double start_time_plaquette = MPI_Wtime();
             double p = mpi::observables::mean_plaquette_global(field, geo, topo);
+            MPI_Barrier(MPI_COMM_WORLD);
+            double end_time_plaquette = MPI_Wtime();
             if (topo.rank == 0) {
                 std::cout << "====== Plaquette ======\n";
                 std::cout << "Sample " << i / rp.N_shift_plaquette << ", <P> = " << p << "\n";
+                double total_time_plaquette = end_time_plaquette - start_time_plaquette;
+                std::cout << std::fixed << std::setprecision(4);
+                std::cout << "Plaquette measurement time : " << total_time_plaquette << "s\n";
             }
             plaquette.emplace_back(p);
             // Event counting
@@ -180,8 +158,7 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
             unsigned long global_lifts = 0;
             unsigned long global_events = 0;
             unsigned long global_rev = 0;
-            double local_lambda =
-                (rp.N_shift_plaquette * state.theta_sample) / (double)local_lifts;
+            double local_lambda = (rp.N_shift_plaquette * state.theta_sample) / (double)local_lifts;
             double global_lambda = 0.0;
             MPI_Reduce(&local_lambda, &global_lambda, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
             MPI_Reduce(&local_lifts, &global_lifts, 1, MPI_UNSIGNED_LONG, MPI_SUM, 0,
@@ -217,8 +194,18 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
             if (topo.rank == 0) {
                 std::cout << "====== Topology ======\n";
             }
+            MPI_Barrier(MPI_COMM_WORLD);
+            double start_time_topo = MPI_Wtime();
             tQE_current = mpi::observables::topo_charge_flowed(field, geo, flow, topo,
                                                                rp.N_steps_gf, rp.N_rk_steps);
+            MPI_Barrier(MPI_COMM_WORLD);
+            double end_time_topo = MPI_Wtime();
+
+            if (topo.rank == 0) {
+                double total_time_topo = end_time_topo - start_time_topo;
+                std::cout << std::fixed << std::setprecision(4);
+                std::cout << "Topology measurement time : " << total_time_topo << "s\n";
+            }
             if (topo.rank == 0) {
                 std::cout << "Sample " << i / rp.N_shift_topo
                           << ", final Q = " << tQE_current[tQE_current.size() - 2]
@@ -240,6 +227,7 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
                 }
                 io::add_shift(i, rp.run_name, rp.run_dir);
                 io::save_event_nb(event_nb, lift_nb, rev_nb, lambda, rp.run_name, rp.run_dir);
+                io::save_shift_nb(i, rp.run_name, rp.run_dir);
             }
             // Save conf
             save_ildg_clime(rp.run_name, rp.run_dir, field, geo, topo);
@@ -281,6 +269,7 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
         io::add_shift(rp.N_shift, rp.run_name, rp.run_dir);
         io::add_finished(rp.run_name, rp.run_dir);
         io::save_event_nb(event_nb, lift_nb, rev_nb, lambda, rp.run_name, rp.run_dir);
+        io::save_shift_nb(start+N_shift, rp.run_name, rp.run_dir);
     }
     // Save conf
     save_ildg_clime(rp.run_name, rp.run_dir, field, geo, topo);

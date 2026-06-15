@@ -136,7 +136,7 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
             std::cout << "Sweep time : " << total_time_sweep << "s\n";
         }
         // Plaquette measure
-        if ((i % rp.N_shift_plaquette == 0) and (i > 0 or !existing)) {
+        if ((i % rp.N_shift_plaquette == 0)) {
             MPI_Barrier(MPI_COMM_WORLD);
             double start_time_plaquette = MPI_Wtime();
             double p = mpi::observables::mean_plaquette_global(field, geo, topo);
