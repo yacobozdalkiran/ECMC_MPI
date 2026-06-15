@@ -191,7 +191,7 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
             state.rev_counter = 0;
         }
         // Measure topo
-        if (rp.topo and (i % rp.N_shift_topo == 0) and (i > 0 or !existing)) {
+        if (rp.topo and (i % rp.N_shift_topo == 0) and (i > 0)) {
             if (topo.rank == 0) {
                 std::cout << "====== Topology ======\n";
             }

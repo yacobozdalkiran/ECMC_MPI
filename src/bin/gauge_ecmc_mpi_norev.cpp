@@ -106,6 +106,7 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
 
     //==============================ECMC===========================
 
+    int N_unit = 1000; //reproj every N_unit shifts
     // Sampling
     if (topo.rank == 0) {
         std::cout << "\n\n===========================================\n";
@@ -127,6 +128,9 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
         state.initialized = false;
 
         mpi::ecmccb::sample_persistant_norev(state, d, field, geo, ep, rng[0]);
+        if (i % N_unit == 0 and i > 0) {
+            field.project_field_su3(geo);
+        }
         mpi::exchange::exchange_halos_cascade(field, geo, topo);
         MPI_Barrier(MPI_COMM_WORLD);
         double end_time_sweep = MPI_Wtime();
@@ -190,7 +194,7 @@ void generate_ecmc_cb(const RunParamsECB& rp, bool existing) {
             state.rev_counter = 0;
         }
         // Measure topo
-        if (rp.topo and (i % rp.N_shift_topo == 0) and (i > 0 or !existing)) {
+        if (rp.topo and (i % rp.N_shift_topo == 0) and (i > 0)) {
             if (topo.rank == 0) {
                 std::cout << "====== Topology ======\n";
             }
