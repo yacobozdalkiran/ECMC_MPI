@@ -57,16 +57,11 @@ void mpi::heatbathcb::sweep(GaugeField& field, const GeometryCB& geo, double bet
 }
 
 // Generates Heatbath samples according to input parameters
-std::vector<double> mpi::heatbathcb::samples(GaugeField& field, const GeometryCB& geo,
-                                             const HbParams& params,
-                                             std::vector<std::mt19937_64>& rng) {
-    std::vector<double> meas(params.N_samples);
-    for (int m = 0; m < params.N_samples; m++) {
-        // Update
-        for (int s = 0; s < params.N_sweeps; s++) {
-            sweep(field, geo, params.beta, params.N_hits, rng, site_parity::EV);
-            sweep(field, geo, params.beta, params.N_hits, rng, site_parity::OD);
-        }
+void mpi::heatbathcb::samples(GaugeField& field, const GeometryCB& geo, const HbParams& params,
+                              std::vector<std::mt19937_64>& rng) {
+    // Update
+    for (int s = 0; s < params.N_sweeps; s++) {
+        sweep(field, geo, params.beta, params.N_hits, rng, site_parity::EV);
+        sweep(field, geo, params.beta, params.N_hits, rng, site_parity::OD);
     }
-    return meas;
 }
