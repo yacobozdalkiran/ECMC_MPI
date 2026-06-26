@@ -397,6 +397,8 @@ void io::save_params(const RunParamsHbCB& rp, const std::string& filename,
     file << "# Run params\n";
     file << "seed=" << rp.seed << "\n";
     file << "N_shift =" << rp.N_shift << "\n";
+    file << "N_ov_sweep ="<< rp.N_ov_sweep << "\n";
+    file << "N_ov_hit ="<< rp.N_ov_hit << "\n\n";
 
     file << "# Heatbath params\n";
     file << "beta = " << rp.hp.beta << "\n";
@@ -452,6 +454,8 @@ void io::load_params(const std::string& filename, RunParamsECB& rp) {
     if (config.count("cold_start")) rp.cold_start = (config["cold_start"] == "true");
     if (config.count("seed")) rp.seed = std::stoi(config["seed"]);
     if (config.count("N_shift")) rp.N_shift = std::stoi(config["N_shift"]);
+    if (config.count("N_ov_sweep")) rp.N_ov_sweep = std::stoi(config["N_ov_sweep"]);
+    if (config.count("N_ov_hit")) rp.N_ov_hit = std::stoi(config["N_ov_hit"]);
 
     // ECMC params
     if (config.count("beta")) rp.ecmc_params.beta = std::stod(config["beta"]);
@@ -503,6 +507,8 @@ void io::load_params(const std::string& filename, RunParamsHbCB& rp) {
     if (config.count("cold_start")) rp.cold_start = (config["cold_start"] == "true");
     if (config.count("seed")) rp.seed = std::stoi(config["seed"]);
     if (config.count("N_shift")) rp.N_shift = std::stoi(config["N_shift"]);
+    if (config.count("N_ov_sweep")) rp.N_ov_sweep = std::stoi(config["N_ov_sweep"]);
+    if (config.count("N_ov_hit")) rp.N_ov_hit = std::stoi(config["N_ov_hit"]);
 
     // Hb params
     if (config.count("beta")) rp.hp.beta = std::stod(config["beta"]);
@@ -539,6 +545,7 @@ void print_parameters(const RunParamsHbCB& rp, const mpi::MpiTopology& topo) {
         std::cout << "---Run params---\n";
         std::cout << "Initial seed : " << rp.seed << "\n";
         std::cout << "Number of shifts : " << rp.N_shift << "\n";
+        std::cout << "Number of overrelaxation sweeps : " << rp.N_ov_sweep << ", " << rp.N_ov_hit << " hits\n";
         std::cout << "Save each : " << rp.save_each_shifts << " shifts\n\n";
 
         std::cout << "---Heatbath params---\n";
@@ -592,6 +599,8 @@ bool io::read_params(RunParamsHbCB& params, int rank, const std::string& input) 
     MPI_Bcast(&params.n_core_dims, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&params.cold_start, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
     MPI_Bcast(&params.N_shift, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_ov_sweep, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_ov_hit, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&params.seed, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&params.topo, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
     MPI_Bcast(&params.N_shift_topo, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -685,6 +694,7 @@ void print_parameters(const RunParamsECB& rp, const mpi::MpiTopology& topo) {
         std::cout << "---Run params---\n";
         std::cout << "Initial seed : " << rp.seed << "\n";
         std::cout << "Number of shifts : " << rp.N_shift << "\n";
+        std::cout << "Number of overrelaxation sweeps : " << rp.N_ov_sweep << ", " << rp.N_ov_hit << " hits\n";
         std::cout << "Save each : " << rp.save_each_shifts << " shifts\n\n";
 
         std::cout << "---ECMC params---\n";
@@ -742,6 +752,8 @@ void io::save_params(const RunParamsECB& rp, const std::string& filename,
     file << "# Run params\n";
     file << "seed = " << rp.seed << "\n";
     file << "N_shift = " << rp.N_shift << "\n";
+    file << "N_ov_sweep ="<< rp.N_ov_sweep << "\n";
+    file << "N_ov_hit ="<< rp.N_ov_hit << "\n\n";
 
     file << "# ECMC params\n";
     file << "beta = " << rp.ecmc_params.beta << "\n";
@@ -783,6 +795,8 @@ bool io::read_params(RunParamsECB& params, int rank, const std::string& input) {
     MPI_Bcast(&params.cold_start, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
     MPI_Bcast(&params.seed, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&params.N_shift, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_ov_sweep, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&params.N_ov_hit, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&params.topo, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
     MPI_Bcast(&params.N_shift_plaquette, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&params.N_shift_topo, 1, MPI_INT, 0, MPI_COMM_WORLD);

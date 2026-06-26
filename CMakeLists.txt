@@ -48,6 +48,7 @@ add_executable(gauge_ecmc_mpi src/bin/gauge_ecmc_mpi.cpp
         src/io/io.cpp
         src/flow/gradient_flow.cpp
         src/io/ildg.cpp
+        src/overrelaxation/overrelaxation.cpp
 )
 target_link_libraries(gauge_ecmc_mpi PRIVATE MPI::MPI_CXX Eigen3::Eigen lime OpenMP::OpenMP_CXX)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
@@ -83,6 +84,7 @@ add_executable(gauge_ecmc_mpi_norev src/bin/gauge_ecmc_mpi_norev.cpp
         src/io/io.cpp
         src/flow/gradient_flow.cpp
         src/io/ildg.cpp
+        src/overrelaxation/overrelaxation.cpp
 )
 target_link_libraries(gauge_ecmc_mpi_norev PRIVATE MPI::MPI_CXX Eigen3::Eigen lime OpenMP::OpenMP_CXX)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
@@ -119,6 +121,7 @@ add_executable(gauge_hb_mpi src/bin/gauge_hb_mpi.cpp
         src/io/io.cpp
         src/flow/gradient_flow.cpp
         src/io/ildg.cpp
+        src/overrelaxation/overrelaxation.cpp
 )
 target_link_libraries(gauge_hb_mpi PRIVATE MPI::MPI_CXX Eigen3::Eigen lime OpenMP::OpenMP_CXX)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")

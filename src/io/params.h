@@ -26,11 +26,13 @@ struct RunParamsECB {
     int n_core_dims = 2;
     bool cold_start = true;
     int seed = 123;
-    int N_shift = 2;           // Number of shifts
-    ECMCParams ecmc_params{};  // Params of the ECMC for each even/odd update
-    bool topo = true;
+    int N_shift = 2;            // Number of shifts
+    int N_ov_sweep = 2;               // Nb ov sweeps
+    int N_ov_hit = 1;           // Nb ov hits
+    ECMCParams ecmc_params{};   // Params of the ECMC for each even/odd update
     int N_shift_plaquette = 2;  // Measure plaquette every N_shift_plaquette_shift
-    int N_shift_topo = 10;      // Measure topo charge every N_shift_topo shift
+    bool topo = true;
+    int N_shift_topo = 10;  // Measure topo charge every N_shift_topo shift
     int N_steps_gf = 10;
     int N_rk_steps = 40;
     std::string run_name = "c";
@@ -42,9 +44,11 @@ struct RunParamsHbCB {
     int L_core = 6;
     int n_core_dims = 2;
     bool cold_start = true;
-    int N_shift = 2;      // Number of shifts
+    int N_shift = 2;  // Number of shifts
+    int N_ov_sweep = 2;               // Nb ov sweeps
+    int N_ov_hit = 1;           // Nb ov hits
     int seed = 123;
-    HbParams hp{};      // Hb params for each even/odd update
+    HbParams hp{};  // Hb params for each even/odd update
     bool topo = true;
     int N_shift_plaquette = 2;  // Measure plaquette every N_shift_plaquette_shift
     int N_shift_topo = 10;      // Measure topo charge every N_shift_topo shift
